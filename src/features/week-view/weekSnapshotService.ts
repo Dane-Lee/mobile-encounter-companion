@@ -1,0 +1,143 @@
+import type {
+  MobileWeekSnapshotPackage,
+  StoredMobileWeekSnapshot,
+} from '../../contracts/mobileContracts';
+import { validateMobileWeekSnapshotPackage } from '../../contracts/validators';
+import {
+  listStoredWeekSnapshots,
+  saveStoredWeekSnapshots,
+} from '../../storage/weekSnapshotStore';
+
+const readFileText = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file);
+  });
+
+const isSameWeekRange = (
+  left: MobileWeekSnapshotPackage,
+  right: MobileWeekSnapshotPackage,
+) =>
+  left.weekStartDate === right.weekStartDate && left.weekEndDate === right.weekEndDate;
+
+export const sortWeekSnapshotsForDisplay = (snapshots: StoredMobileWeekSnapshot[]) =>
+  [...snapshots].sort((left, right) => {
+    if (left.selectedForDisplay !== right.selectedForDisplay) {
+      return left.selectedForDisplay ? -1 : 1;
+    }
+
+    if (left.package.isCurrentWeek !== right.package.isCurrentWeek) {
+      return left.package.isCurrentWeek ? -1 : 1;
+    }
+
+    if (left.package.weekStartDate !== right.package.weekStartDate) {
+      return right.package.weekStartDate.localeCompare(left.package.weekStartDate);
+    }
+
+    return right.importedToMobileAt.localeCompare(left.importedToMobileAt);
+  });
+
+export const listWeekSnapshotsForDisplay = async () =>
+  sortWeekSnapshotsForDisplay(await listStoredWeekSnapshots());
+
+export const getActiveWeekSnapshot = (snapshots: StoredMobileWeekSnapshot[]) => {
+  const orderedSnapshots = sortWeekSnapshotsForDisplay(snapshots);
+
+  return (
+    orderedSnapshots.find((snapshot) => snapshot.selectedForDisplay) ??
+    orderedSnapshots.find(
+      (snapshot) => snapshot.package.isCurrentWeek && snapshot.snapshotStatus === 'current',
+    ) ??
+    orderedSnapshots[0] ??
+    null
+  );
+};
+
+export const parseWeekSnapshotImportFile = async (file: File) => {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(await readFileText(file)) as unknown;
+  } catch {
+    throw new Error(`${file.name} is not valid JSON.`);
+  }
+
+  const validationResult = validateMobileWeekSnapshotPackage(parsed);
+  if (!validationResult.ok) {
+    throw new Error(validationResult.errors.join(' '));
+  }
+
+  return validationResult.value;
+};
+
+export const importValidatedWeekSnapshotPackage = async (
+  weekSnapshotPackage: MobileWeekSnapshotPackage,
+) => {
+  const existingSnapshots = await listStoredWeekSnapshots();
+  const importedToMobileAt = new Date().toISOString();
+  const localWeekSnapshotId = `local-${weekSnapshotPackage.packageId}`;
+  const replacingExisting = existingSnapshots.find(
+    (snapshot) => snapshot.localWeekSnapshotId === localWeekSnapshotId,
+  );
+  const hasSelectedWeek = existingSnapshots.some(
+    (snapshot) => snapshot.selectedForDisplay && snapshot.snapshotStatus !== 'archived',
+  );
+
+  const updatedExistingSnapshots = existingSnapshots
+    .filter((snapshot) => snapshot.localWeekSnapshotId !== localWeekSnapshotId)
+    .map((snapshot) => {
+      const sameWeek = isSameWeekRange(snapshot.package, weekSnapshotPackage);
+
+      return {
+        ...snapshot,
+        // snapshotStatus tracks local package lineage, not whether the represented
+        // week is the current calendar week.
+        snapshotStatus: sameWeek ? 'superseded' : snapshot.snapshotStatus,
+        selectedForDisplay: weekSnapshotPackage.isCurrentWeek
+          ? false
+          : snapshot.selectedForDisplay,
+      };
+    });
+
+  const importedSnapshot: StoredMobileWeekSnapshot = {
+    localWeekSnapshotId,
+    importedToMobileAt,
+    snapshotStatus: 'current',
+    selectedForDisplay:
+      weekSnapshotPackage.isCurrentWeek ||
+      replacingExisting?.selectedForDisplay === true ||
+      !hasSelectedWeek,
+    package: weekSnapshotPackage,
+  };
+
+  await saveStoredWeekSnapshots([...updatedExistingSnapshots, importedSnapshot]);
+  return importedSnapshot;
+};
+
+export const importWeekSnapshotFile = async (file: File) =>
+  importValidatedWeekSnapshotPackage(await parseWeekSnapshotImportFile(file));
+
+export const selectWeekSnapshotForDisplay = async (localWeekSnapshotId: string) => {
+  const existingSnapshots = await listStoredWeekSnapshots();
+  const targetSnapshot = existingSnapshots.find(
+    (snapshot) =>
+      snapshot.localWeekSnapshotId === localWeekSnapshotId &&
+      snapshot.snapshotStatus !== 'archived',
+  );
+
+  if (!targetSnapshot) {
+    throw new Error('Week snapshot not found.');
+  }
+
+  const updatedSnapshots = existingSnapshots.map((snapshot) => ({
+    ...snapshot,
+    selectedForDisplay:
+      snapshot.snapshotStatus !== 'archived' &&
+      snapshot.localWeekSnapshotId === localWeekSnapshotId,
+  }));
+
+  await saveStoredWeekSnapshots(updatedSnapshots);
+  return updatedSnapshots;
+};

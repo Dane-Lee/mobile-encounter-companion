@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title>Daily Encounter Tracking Companion</title>
+  <rect width="64" height="64" rx="18" fill="#0f4c5c"/>
+  <path d="M18 20h28v24H18z" fill="#f3f1eb" opacity=".2"/>
+  <path d="M22 18h20a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4H22a4 4 0 0 1-4-4V22a4 4 0 0 1 4-4Z" fill="#f3f1eb"/>
+  <path d="M26 26h12" stroke="#0f4c5c" stroke-width="3" stroke-linecap="round"/>
+  <path d="M26 33h10" stroke="#0f4c5c" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="42" cy="40" r="8" fill="#ff8f5b"/>
+  <path d="M42 36v8M38 40h8" stroke="#102027" stroke-width="3" stroke-linecap="round"/>
+</svg>

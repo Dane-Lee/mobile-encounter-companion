@@ -1,0 +1,19 @@
+{
+  "name": "Daily Encounter Tracking Companion",
+  "short_name": "Encounter Companion",
+  "description": "Local-first mobile companion for fast encounter capture and read-only weekly snapshots.",
+  "theme_color": "#11284a",
+  "background_color": "#0b1932",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "/",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

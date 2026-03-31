@@ -1,0 +1,213 @@
+{
+  "schemaVersion": "1.0.0",
+  "packageType": "mobile_week_snapshot",
+  "packageId": "sample-week-previous",
+  "generatedBy": "desktop_app",
+  "generatedAt": "2026-03-23T16:00:00.000Z",
+  "timezone": "America/New_York",
+  "weekStartDate": "2026-03-23",
+  "weekEndDate": "2026-03-29",
+  "isCurrentWeek": false,
+  "desktopDataVersion": "desktop-2026.03.23",
+  "weekSummary": {
+    "totalCompletedEncounters": 6,
+    "totalScheduledReminders": 4,
+    "totalOverdueReminders": 1,
+    "totalFollowUpsDue": 4,
+    "daysWithActivityCount": 4
+  },
+  "days": [
+    {
+      "date": "2026-03-23",
+      "dayLabel": "Mon",
+      "isToday": false,
+      "completedEncounterCount": 1,
+      "completedEncounterItems": [
+        {
+          "desktopEncounterId": "desktop-enc-2301",
+          "employeeDisplayName": "Jordan Hale",
+          "encounterType": "Check-in",
+          "summaryShort": "Prior week check-in completed.",
+          "time": "09:00"
+        }
+      ],
+      "scheduledReminderCount": 1,
+      "scheduledReminderItems": [
+        {
+          "desktopReminderId": "desktop-rem-2301",
+          "title": "Review staffing adjustment",
+          "relatedEmployeeDisplayName": null,
+          "dueDate": "2026-03-23",
+          "dueTime": "16:00",
+          "status": "scheduled",
+          "priority": "normal",
+          "summaryShort": "Older desktop reminder snapshot."
+        }
+      ],
+      "overdueReminderCount": 0,
+      "overdueReminderItems": [],
+      "followUpCount": 1,
+      "notes": null
+    },
+    {
+      "date": "2026-03-24",
+      "dayLabel": "Tue",
+      "isToday": false,
+      "completedEncounterCount": 0,
+      "completedEncounterItems": [],
+      "scheduledReminderCount": 0,
+      "scheduledReminderItems": [],
+      "overdueReminderCount": 0,
+      "overdueReminderItems": [],
+      "followUpCount": 0,
+      "notes": null
+    },
+    {
+      "date": "2026-03-25",
+      "dayLabel": "Wed",
+      "isToday": false,
+      "completedEncounterCount": 2,
+      "completedEncounterItems": [
+        {
+          "desktopEncounterId": "desktop-enc-2501",
+          "employeeDisplayName": "Mina Patel",
+          "encounterType": "Coaching",
+          "summaryShort": "Coaching note completed.",
+          "time": "10:40"
+        },
+        {
+          "desktopEncounterId": "desktop-enc-2502",
+          "employeeDisplayName": "Alicia Kim",
+          "encounterType": "Recognition",
+          "summaryShort": "Recognition note completed.",
+          "time": "14:30"
+        }
+      ],
+      "scheduledReminderCount": 1,
+      "scheduledReminderItems": [
+        {
+          "desktopReminderId": "desktop-rem-2501",
+          "title": "Confirm recognition follow-up",
+          "relatedEmployeeDisplayName": "Alicia Kim",
+          "dueDate": "2026-03-25",
+          "dueTime": "17:00",
+          "status": "scheduled",
+          "priority": "low",
+          "summaryShort": null
+        }
+      ],
+      "overdueReminderCount": 1,
+      "overdueReminderItems": [
+        {
+          "desktopReminderId": "desktop-overdue-2501",
+          "title": "Pending coaching callback",
+          "relatedEmployeeDisplayName": "Mina Patel",
+          "dueDate": "2026-03-25",
+          "dueTime": "11:00",
+          "status": "overdue",
+          "priority": "high",
+          "summaryShort": "Still overdue in desktop snapshot."
+        }
+      ],
+      "followUpCount": 2,
+      "notes": null
+    },
+    {
+      "date": "2026-03-26",
+      "dayLabel": "Thu",
+      "isToday": false,
+      "completedEncounterCount": 1,
+      "completedEncounterItems": [
+        {
+          "desktopEncounterId": "desktop-enc-2601",
+          "employeeDisplayName": "DeAndre Ross",
+          "encounterType": "Support",
+          "summaryShort": "Support issue closed.",
+          "time": "12:15"
+        }
+      ],
+      "scheduledReminderCount": 1,
+      "scheduledReminderItems": [
+        {
+          "desktopReminderId": "desktop-rem-2601",
+          "title": "End-of-day support review",
+          "relatedEmployeeDisplayName": "DeAndre Ross",
+          "dueDate": "2026-03-26",
+          "dueTime": "18:00",
+          "status": "scheduled",
+          "priority": "normal",
+          "summaryShort": "Previous week support review."
+        }
+      ],
+      "overdueReminderCount": 0,
+      "overdueReminderItems": [],
+      "followUpCount": 1,
+      "notes": null
+    },
+    {
+      "date": "2026-03-27",
+      "dayLabel": "Fri",
+      "isToday": false,
+      "completedEncounterCount": 2,
+      "completedEncounterItems": [
+        {
+          "desktopEncounterId": "desktop-enc-2701",
+          "employeeDisplayName": "Terry Flores",
+          "encounterType": "Follow-up",
+          "summaryShort": "Follow-up marked complete.",
+          "time": "09:35"
+        },
+        {
+          "desktopEncounterId": "desktop-enc-2702",
+          "employeeDisplayName": "Jordan Hale",
+          "encounterType": "Check-in",
+          "summaryShort": "Brief wrap-up check-in completed.",
+          "time": "15:05"
+        }
+      ],
+      "scheduledReminderCount": 1,
+      "scheduledReminderItems": [
+        {
+          "desktopReminderId": "desktop-rem-2701",
+          "title": "Prepare weekend notes",
+          "relatedEmployeeDisplayName": null,
+          "dueDate": "2026-03-27",
+          "dueTime": null,
+          "status": "scheduled",
+          "priority": "normal",
+          "summaryShort": "All-day reminder."
+        }
+      ],
+      "overdueReminderCount": 0,
+      "overdueReminderItems": [],
+      "followUpCount": 1,
+      "notes": "Older desktop snapshot retained for review."
+    },
+    {
+      "date": "2026-03-28",
+      "dayLabel": "Sat",
+      "isToday": false,
+      "completedEncounterCount": 0,
+      "completedEncounterItems": [],
+      "scheduledReminderCount": 0,
+      "scheduledReminderItems": [],
+      "overdueReminderCount": 0,
+      "overdueReminderItems": [],
+      "followUpCount": 0,
+      "notes": null
+    },
+    {
+      "date": "2026-03-29",
+      "dayLabel": "Sun",
+      "isToday": false,
+      "completedEncounterCount": 0,
+      "completedEncounterItems": [],
+      "scheduledReminderCount": 0,
+      "scheduledReminderItems": [],
+      "overdueReminderCount": 0,
+      "overdueReminderItems": [],
+      "followUpCount": 0,
+      "notes": null
+    }
+  ]
+}
