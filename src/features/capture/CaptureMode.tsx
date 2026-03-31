@@ -1,3 +1,4 @@
+import CollapsibleSection from '../../components/CollapsibleSection';
 import type { CaptureFormValues, MobileEncounterCapture } from '../../contracts/mobileContracts';
 import CaptureForm from './CaptureForm';
 import CaptureList from './CaptureList';
@@ -19,12 +20,21 @@ const CaptureMode = ({
 }: CaptureModeProps) => (
   <div className="screen-column">
     <CaptureForm onSave={onSave} disabled={disabled} />
-    <CaptureList
-      captures={captures}
-      onMarkReady={onMarkReady}
-      onExportSelected={onExportSelected}
-      disabled={disabled}
-    />
+    <CollapsibleSection
+      title="Local Captures"
+      description="Saved locally until you export them."
+      meta={`${captures.length} saved`}
+      className="collapsible-panel--captures"
+    >
+      <section className="section-card section-card--capture-list">
+        <CaptureList
+          captures={captures}
+          onMarkReady={onMarkReady}
+          onExportSelected={onExportSelected}
+          disabled={disabled}
+        />
+      </section>
+    </CollapsibleSection>
   </div>
 );
 

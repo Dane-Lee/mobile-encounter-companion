@@ -1,250 +1,268 @@
 {
-  "schemaVersion": "1.0.0",
-  "packageType": "mobile_week_snapshot",
-  "packageId": "sample-week-current",
-  "generatedBy": "desktop_app",
-  "generatedAt": "2026-03-30T16:00:00.000Z",
-  "timezone": "America/New_York",
-  "weekStartDate": "2026-03-30",
-  "weekEndDate": "2026-04-05",
-  "isCurrentWeek": true,
-  "desktopDataVersion": "desktop-2026.03.30",
-  "weekSummary": {
-    "totalCompletedEncounters": 8,
-    "totalScheduledReminders": 5,
-    "totalOverdueReminders": 2,
-    "totalFollowUpsDue": 6,
-    "daysWithActivityCount": 5
-  },
-  "days": [
-    {
-      "date": "2026-03-30",
-      "dayLabel": "Mon",
-      "isToday": true,
-      "completedEncounterCount": 2,
-      "completedEncounterItems": [
-        {
-          "desktopEncounterId": "desktop-enc-3001",
-          "employeeDisplayName": "Jordan Hale",
-          "encounterType": "Check-in",
-          "summaryShort": "Morning floor check-in completed.",
-          "time": "09:10"
-        },
-        {
-          "desktopEncounterId": "desktop-enc-3002",
-          "employeeDisplayName": "Alicia Kim",
-          "encounterType": "Recognition",
-          "summaryShort": "Recognition follow-up logged from desktop.",
-          "time": "13:40"
-        }
-      ],
-      "scheduledReminderCount": 1,
-      "scheduledReminderItems": [
-        {
-          "desktopReminderId": "desktop-rem-3001",
-          "title": "Confirm end-of-day callback",
-          "relatedEmployeeDisplayName": "Jordan Hale",
-          "dueDate": "2026-03-30",
-          "dueTime": "16:30",
-          "status": "scheduled",
-          "priority": "normal",
-          "summaryShort": "Pending callback confirmation."
-        }
-      ],
-      "overdueReminderCount": 0,
-      "overdueReminderItems": [],
-      "followUpCount": 2,
-      "notes": "Current desktop snapshot for the active week."
-    },
-    {
-      "date": "2026-03-31",
-      "dayLabel": "Tue",
-      "isToday": false,
-      "completedEncounterCount": 1,
-      "completedEncounterItems": [
-        {
-          "desktopEncounterId": "desktop-enc-3101",
-          "employeeDisplayName": "Mina Patel",
-          "encounterType": "Coaching",
-          "summaryShort": "Coaching note entered after floor conversation.",
-          "time": "10:25"
-        }
-      ],
-      "scheduledReminderCount": 1,
-      "scheduledReminderItems": [
-        {
-          "desktopReminderId": "desktop-rem-3101",
-          "title": "Check equipment request",
-          "relatedEmployeeDisplayName": "Mina Patel",
-          "dueDate": "2026-03-31",
-          "dueTime": "14:00",
-          "status": "scheduled",
-          "priority": "normal",
-          "summaryShort": "Confirm ticket handoff."
-        }
-      ],
-      "overdueReminderCount": 1,
-      "overdueReminderItems": [
-        {
-          "desktopReminderId": "desktop-overdue-3101",
-          "title": "Escalation review overdue",
-          "relatedEmployeeDisplayName": "DeAndre Ross",
-          "dueDate": "2026-03-31",
-          "dueTime": "09:00",
-          "status": "overdue",
-          "priority": "high",
-          "summaryShort": "Needs desktop follow-up."
-        }
-      ],
-      "followUpCount": 2,
-      "notes": null
-    },
-    {
-      "date": "2026-04-01",
-      "dayLabel": "Wed",
-      "isToday": false,
-      "completedEncounterCount": 2,
-      "completedEncounterItems": [
-        {
-          "desktopEncounterId": "desktop-enc-3201",
-          "employeeDisplayName": "DeAndre Ross",
-          "encounterType": "Support",
-          "summaryShort": "Support touchpoint marked complete.",
-          "time": "11:30"
-        },
-        {
-          "desktopEncounterId": "desktop-enc-3202",
-          "employeeDisplayName": "Terry Flores",
-          "encounterType": "Follow-up",
-          "summaryShort": "Prior floor issue resolved and logged.",
-          "time": "15:20"
-        }
-      ],
-      "scheduledReminderCount": 1,
-      "scheduledReminderItems": [
-        {
-          "desktopReminderId": "desktop-rem-3201",
-          "title": "Review staffing note",
-          "relatedEmployeeDisplayName": null,
-          "dueDate": "2026-04-01",
-          "dueTime": null,
-          "status": "scheduled",
-          "priority": "low",
-          "summaryShort": "All-day reminder."
-        }
-      ],
-      "overdueReminderCount": 0,
-      "overdueReminderItems": [],
-      "followUpCount": 1,
-      "notes": null
-    },
-    {
-      "date": "2026-04-02",
-      "dayLabel": "Thu",
-      "isToday": false,
-      "completedEncounterCount": 0,
-      "completedEncounterItems": [],
-      "scheduledReminderCount": 0,
-      "scheduledReminderItems": [],
-      "overdueReminderCount": 0,
-      "overdueReminderItems": [],
-      "followUpCount": 0,
-      "notes": "No major desktop activity."
-    },
-    {
-      "date": "2026-04-03",
-      "dayLabel": "Fri",
-      "isToday": false,
-      "completedEncounterCount": 2,
-      "completedEncounterItems": [
-        {
-          "desktopEncounterId": "desktop-enc-3401",
-          "employeeDisplayName": "Alicia Kim",
-          "encounterType": "Recognition",
-          "summaryShort": "Recognition conversation closed out.",
-          "time": "09:45"
-        },
-        {
-          "desktopEncounterId": "desktop-enc-3402",
-          "employeeDisplayName": "Jordan Hale",
-          "encounterType": "Check-in",
-          "summaryShort": "Brief shift-start check-in completed.",
-          "time": "13:15"
-        }
-      ],
-      "scheduledReminderCount": 1,
-      "scheduledReminderItems": [
-        {
-          "desktopReminderId": "desktop-rem-3401",
-          "title": "Confirm weekend coverage note",
-          "relatedEmployeeDisplayName": null,
-          "dueDate": "2026-04-03",
-          "dueTime": "17:00",
-          "status": "scheduled",
-          "priority": "normal",
-          "summaryShort": null
-        }
-      ],
-      "overdueReminderCount": 1,
-      "overdueReminderItems": [
-        {
-          "desktopReminderId": "desktop-overdue-3401",
-          "title": "Overdue callback review",
-          "relatedEmployeeDisplayName": "Terry Flores",
-          "dueDate": "2026-04-03",
-          "dueTime": "10:00",
-          "status": "overdue",
-          "priority": "high",
-          "summaryShort": "Still open in desktop queue."
-        }
-      ],
-      "followUpCount": 1,
-      "notes": null
-    },
-    {
-      "date": "2026-04-04",
-      "dayLabel": "Sat",
-      "isToday": false,
-      "completedEncounterCount": 1,
-      "completedEncounterItems": [
-        {
-          "desktopEncounterId": "desktop-enc-3501",
-          "employeeDisplayName": "Mina Patel",
-          "encounterType": "Support",
-          "summaryShort": "Weekend support note completed.",
-          "time": "12:10"
-        }
-      ],
-      "scheduledReminderCount": 1,
-      "scheduledReminderItems": [
-        {
-          "desktopReminderId": "desktop-rem-3501",
-          "title": "Follow up on shift note",
-          "relatedEmployeeDisplayName": "Mina Patel",
-          "dueDate": "2026-04-04",
-          "dueTime": "15:30",
-          "status": "scheduled",
-          "priority": "normal",
-          "summaryShort": "Reminder linked to weekend support note."
-        }
-      ],
-      "overdueReminderCount": 0,
-      "overdueReminderItems": [],
-      "followUpCount": 0,
-      "notes": null
-    },
-    {
-      "date": "2026-04-05",
-      "dayLabel": "Sun",
-      "isToday": false,
-      "completedEncounterCount": 0,
-      "completedEncounterItems": [],
-      "scheduledReminderCount": 0,
-      "scheduledReminderItems": [],
-      "overdueReminderCount": 0,
-      "overdueReminderItems": [],
-      "followUpCount": 0,
-      "notes": null
-    }
-  ]
+    "schemaVersion":  "1.0.0",
+    "packageType":  "mobile_week_snapshot",
+    "packageId":  "sample-week-current",
+    "generatedBy":  "desktop_app",
+    "generatedAt":  "2026-03-30T16:00:00.000Z",
+    "timezone":  "America/New_York",
+    "weekStartDate":  "2026-03-30",
+    "weekEndDate":  "2026-04-05",
+    "isCurrentWeek":  true,
+    "desktopDataVersion":  "desktop-2026.03.30",
+    "weekSummary":  {
+                        "totalCompletedEncounters":  8,
+                        "totalScheduledReminders":  5,
+                        "totalOverdueReminders":  2,
+                        "totalFollowUpsDue":  6,
+                        "daysWithActivityCount":  5
+                    },
+    "days":  [
+                 {
+                     "date":  "2026-03-30",
+                     "dayLabel":  "Mon",
+                     "isToday":  true,
+                     "completedEncounterCount":  2,
+                     "completedEncounterItems":  [
+                                                     {
+                                                         "desktopEncounterId":  "desktop-enc-3001",
+                                                         "employeeDisplayName":  "Jordan Hale",
+                                                         "encounterType":  "Relationship Development",
+                                                         "summaryShort":  "Morning floor check-in completed.",
+                                                         "time":  "09:10"
+                                                     },
+                                                     {
+                                                         "desktopEncounterId":  "desktop-enc-3002",
+                                                         "employeeDisplayName":  "Alicia Kim",
+                                                         "encounterType":  "Relationship Development",
+                                                         "summaryShort":  "Recognition follow-up logged from desktop.",
+                                                         "time":  "13:40"
+                                                     }
+                                                 ],
+                     "scheduledReminderCount":  1,
+                     "scheduledReminderItems":  [
+                                                    {
+                                                        "desktopReminderId":  "desktop-rem-3001",
+                                                        "title":  "Confirm end-of-day callback",
+                                                        "relatedEmployeeDisplayName":  "Jordan Hale",
+                                                        "dueDate":  "2026-03-30",
+                                                        "dueTime":  "16:30",
+                                                        "status":  "scheduled",
+                                                        "priority":  "normal",
+                                                        "summaryShort":  "Pending callback confirmation."
+                                                    }
+                                                ],
+                     "overdueReminderCount":  0,
+                     "overdueReminderItems":  [
+
+                                              ],
+                     "followUpCount":  2,
+                     "notes":  "Current desktop snapshot for the active week."
+                 },
+                 {
+                     "date":  "2026-03-31",
+                     "dayLabel":  "Tue",
+                     "isToday":  false,
+                     "completedEncounterCount":  1,
+                     "completedEncounterItems":  [
+                                                     {
+                                                         "desktopEncounterId":  "desktop-enc-3101",
+                                                         "employeeDisplayName":  "Mina Patel",
+                                                         "encounterType":  "Job-Specific Coaching",
+                                                         "summaryShort":  "Coaching note entered after floor conversation.",
+                                                         "time":  "10:25"
+                                                     }
+                                                 ],
+                     "scheduledReminderCount":  1,
+                     "scheduledReminderItems":  [
+                                                    {
+                                                        "desktopReminderId":  "desktop-rem-3101",
+                                                        "title":  "Check equipment request",
+                                                        "relatedEmployeeDisplayName":  "Mina Patel",
+                                                        "dueDate":  "2026-03-31",
+                                                        "dueTime":  "14:00",
+                                                        "status":  "scheduled",
+                                                        "priority":  "normal",
+                                                        "summaryShort":  "Confirm ticket handoff."
+                                                    }
+                                                ],
+                     "overdueReminderCount":  1,
+                     "overdueReminderItems":  [
+                                                  {
+                                                      "desktopReminderId":  "desktop-overdue-3101",
+                                                      "title":  "Escalation review overdue",
+                                                      "relatedEmployeeDisplayName":  "DeAndre Ross",
+                                                      "dueDate":  "2026-03-31",
+                                                      "dueTime":  "09:00",
+                                                      "status":  "overdue",
+                                                      "priority":  "high",
+                                                      "summaryShort":  "Needs desktop follow-up."
+                                                  }
+                                              ],
+                     "followUpCount":  2,
+                     "notes":  null
+                 },
+                 {
+                     "date":  "2026-04-01",
+                     "dayLabel":  "Wed",
+                     "isToday":  false,
+                     "completedEncounterCount":  2,
+                     "completedEncounterItems":  [
+                                                     {
+                                                         "desktopEncounterId":  "desktop-enc-3201",
+                                                         "employeeDisplayName":  "DeAndre Ross",
+                                                         "encounterType":  "General Medical Coaching",
+                                                         "summaryShort":  "Support touchpoint marked complete.",
+                                                         "time":  "11:30"
+                                                     },
+                                                     {
+                                                         "desktopEncounterId":  "desktop-enc-3202",
+                                                         "employeeDisplayName":  "Terry Flores",
+                                                         "encounterType":  "PA Follow-Ups",
+                                                         "summaryShort":  "Prior floor issue resolved and logged.",
+                                                         "time":  "15:20"
+                                                     }
+                                                 ],
+                     "scheduledReminderCount":  1,
+                     "scheduledReminderItems":  [
+                                                    {
+                                                        "desktopReminderId":  "desktop-rem-3201",
+                                                        "title":  "Review staffing note",
+                                                        "relatedEmployeeDisplayName":  null,
+                                                        "dueDate":  "2026-04-01",
+                                                        "dueTime":  null,
+                                                        "status":  "scheduled",
+                                                        "priority":  "low",
+                                                        "summaryShort":  "All-day reminder."
+                                                    }
+                                                ],
+                     "overdueReminderCount":  0,
+                     "overdueReminderItems":  [
+
+                                              ],
+                     "followUpCount":  1,
+                     "notes":  null
+                 },
+                 {
+                     "date":  "2026-04-02",
+                     "dayLabel":  "Thu",
+                     "isToday":  false,
+                     "completedEncounterCount":  0,
+                     "completedEncounterItems":  [
+
+                                                 ],
+                     "scheduledReminderCount":  0,
+                     "scheduledReminderItems":  [
+
+                                                ],
+                     "overdueReminderCount":  0,
+                     "overdueReminderItems":  [
+
+                                              ],
+                     "followUpCount":  0,
+                     "notes":  "No major desktop activity."
+                 },
+                 {
+                     "date":  "2026-04-03",
+                     "dayLabel":  "Fri",
+                     "isToday":  false,
+                     "completedEncounterCount":  2,
+                     "completedEncounterItems":  [
+                                                     {
+                                                         "desktopEncounterId":  "desktop-enc-3401",
+                                                         "employeeDisplayName":  "Alicia Kim",
+                                                         "encounterType":  "Relationship Development",
+                                                         "summaryShort":  "Recognition conversation closed out.",
+                                                         "time":  "09:45"
+                                                     },
+                                                     {
+                                                         "desktopEncounterId":  "desktop-enc-3402",
+                                                         "employeeDisplayName":  "Jordan Hale",
+                                                         "encounterType":  "Relationship Development",
+                                                         "summaryShort":  "Brief shift-start check-in completed.",
+                                                         "time":  "13:15"
+                                                     }
+                                                 ],
+                     "scheduledReminderCount":  1,
+                     "scheduledReminderItems":  [
+                                                    {
+                                                        "desktopReminderId":  "desktop-rem-3401",
+                                                        "title":  "Confirm weekend coverage note",
+                                                        "relatedEmployeeDisplayName":  null,
+                                                        "dueDate":  "2026-04-03",
+                                                        "dueTime":  "17:00",
+                                                        "status":  "scheduled",
+                                                        "priority":  "normal",
+                                                        "summaryShort":  null
+                                                    }
+                                                ],
+                     "overdueReminderCount":  1,
+                     "overdueReminderItems":  [
+                                                  {
+                                                      "desktopReminderId":  "desktop-overdue-3401",
+                                                      "title":  "Overdue callback review",
+                                                      "relatedEmployeeDisplayName":  "Terry Flores",
+                                                      "dueDate":  "2026-04-03",
+                                                      "dueTime":  "10:00",
+                                                      "status":  "overdue",
+                                                      "priority":  "high",
+                                                      "summaryShort":  "Still open in desktop queue."
+                                                  }
+                                              ],
+                     "followUpCount":  1,
+                     "notes":  null
+                 },
+                 {
+                     "date":  "2026-04-04",
+                     "dayLabel":  "Sat",
+                     "isToday":  false,
+                     "completedEncounterCount":  1,
+                     "completedEncounterItems":  [
+                                                     {
+                                                         "desktopEncounterId":  "desktop-enc-3501",
+                                                         "employeeDisplayName":  "Mina Patel",
+                                                         "encounterType":  "General Medical Coaching",
+                                                         "summaryShort":  "Weekend support note completed.",
+                                                         "time":  "12:10"
+                                                     }
+                                                 ],
+                     "scheduledReminderCount":  1,
+                     "scheduledReminderItems":  [
+                                                    {
+                                                        "desktopReminderId":  "desktop-rem-3501",
+                                                        "title":  "Follow up on shift note",
+                                                        "relatedEmployeeDisplayName":  "Mina Patel",
+                                                        "dueDate":  "2026-04-04",
+                                                        "dueTime":  "15:30",
+                                                        "status":  "scheduled",
+                                                        "priority":  "normal",
+                                                        "summaryShort":  "Reminder linked to weekend support note."
+                                                    }
+                                                ],
+                     "overdueReminderCount":  0,
+                     "overdueReminderItems":  [
+
+                                              ],
+                     "followUpCount":  0,
+                     "notes":  null
+                 },
+                 {
+                     "date":  "2026-04-05",
+                     "dayLabel":  "Sun",
+                     "isToday":  false,
+                     "completedEncounterCount":  0,
+                     "completedEncounterItems":  [
+
+                                                 ],
+                     "scheduledReminderCount":  0,
+                     "scheduledReminderItems":  [
+
+                                                ],
+                     "overdueReminderCount":  0,
+                     "overdueReminderItems":  [
+
+                                              ],
+                     "followUpCount":  0,
+                     "notes":  null
+                 }
+             ]
 }

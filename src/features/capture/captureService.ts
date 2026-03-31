@@ -3,6 +3,7 @@ import type {
   MobileCaptureExportPackage,
   MobileEncounterCapture,
 } from '../../contracts/mobileContracts';
+import { normalizeEncounterType } from '../../contracts/encounterTypes';
 import { validateMobileCaptureExportPackage } from '../../contracts/validators';
 import {
   buildCaptureExportPackage,
@@ -23,8 +24,34 @@ export interface PreparedCaptureExport {
 export const sortCaptureRecordsForDisplay = (captures: MobileEncounterCapture[]) =>
   [...captures].sort((left, right) => right.updatedOnDeviceAt.localeCompare(left.updatedOnDeviceAt));
 
+const normalizeStoredCaptureRecord = (capture: MobileEncounterCapture) => {
+  const normalizedEncounterType = normalizeEncounterType(capture.encounterType);
+
+  if (!normalizedEncounterType || normalizedEncounterType === capture.encounterType) {
+    return capture;
+  }
+
+  return {
+    ...capture,
+    encounterType: normalizedEncounterType,
+  };
+};
+
+const normalizeStoredCaptureRecords = async (captures: MobileEncounterCapture[]) => {
+  const normalizedCaptures = captures.map(normalizeStoredCaptureRecord);
+  const hasChanges = normalizedCaptures.some((capture, index) => capture !== captures[index]);
+
+  if (hasChanges) {
+    await saveMobileEncounterCaptures(normalizedCaptures);
+  }
+
+  return normalizedCaptures;
+};
+
 export const listCaptureRecordsForDisplay = async () =>
-  sortCaptureRecordsForDisplay(await listMobileEncounterCaptures());
+  sortCaptureRecordsForDisplay(
+    await normalizeStoredCaptureRecords(await listMobileEncounterCaptures()),
+  );
 
 export const createAndSaveCaptureRecord = async (
   values: CaptureFormValues,
@@ -36,7 +63,7 @@ export const createAndSaveCaptureRecord = async (
 };
 
 export const promoteCaptureDraftToReady = async (captureId: string) => {
-  const captures = await listMobileEncounterCaptures();
+  const captures = await normalizeStoredCaptureRecords(await listMobileEncounterCaptures());
   const target = captures.find((capture) => capture.captureId === captureId);
 
   if (!target) {
@@ -57,7 +84,7 @@ export const promoteCaptureDraftToReady = async (captureId: string) => {
 export const prepareCaptureExport = async (
   captureIds: string[],
 ): Promise<PreparedCaptureExport> => {
-  const captures = await listMobileEncounterCaptures();
+  const captures = await normalizeStoredCaptureRecords(await listMobileEncounterCaptures());
   const selectedCaptures = sortCaptureRecordsForDisplay(
     captures.filter((capture) => captureIds.includes(capture.captureId)),
   );
@@ -92,7 +119,7 @@ export const commitCaptureExport = async (
   exportBatchId: string,
   exportedAt: string,
 ) => {
-  const captures = await listMobileEncounterCaptures();
+  const captures = await normalizeStoredCaptureRecords(await listMobileEncounterCaptures());
   const updatedCaptures = captures
     .filter((capture) => captureIds.includes(capture.captureId))
     .map((capture) => ({

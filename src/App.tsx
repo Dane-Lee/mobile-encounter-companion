@@ -32,12 +32,19 @@ const App = () => {
       <header className="app-header">
         <div className="app-header__content">
           <p className="eyebrow">Daily Encounter Tracking</p>
-          <h1>Mobile Companion</h1>
-          <p className="app-header__copy">
-            Local-first field capture and read-only weekly desktop snapshots. No sync yet.
-          </p>
+          <div className="app-header__title-row">
+            <div className="app-header__logo-frame">
+              <img
+                className="app-header__logo"
+                src="/branding/ati-logo.png"
+                alt="ATI Worksite Solutions"
+              />
+            </div>
+            <h1>Mobile Companion</h1>
+          </div>
         </div>
         <div className="app-header__controls">
+          <ModeSwitcher mode={mode} onChange={setMode} />
           <button
             type="button"
             className="button button--ghost button--guide"
@@ -45,7 +52,6 @@ const App = () => {
           >
             How This Works
           </button>
-          <ModeSwitcher mode={mode} onChange={setMode} />
         </div>
       </header>
 

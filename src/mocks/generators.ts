@@ -11,6 +11,10 @@ import {
   type StoredMobileWeekSnapshot,
 } from '../contracts/mobileContracts';
 import {
+  ENCOUNTER_TYPE_OPTIONS,
+  type EncounterType,
+} from '../contracts/encounterTypes';
+import {
   addDays,
   addWeeks,
   getCurrentTimezone,
@@ -22,7 +26,71 @@ import {
 
 const SAMPLE_PREFIX = 'sample';
 const employeeNames = ['Jordan Hale', 'Terry Flores', 'Mina Patel', 'DeAndre Ross', 'Alicia Kim'];
-const encounterTypes = ['Check-in', 'Coaching', 'Recognition', 'Support', 'Follow-up'];
+const encounterTypes: EncounterType[] = [
+  ENCOUNTER_TYPE_OPTIONS[0],
+  ENCOUNTER_TYPE_OPTIONS[1],
+  ENCOUNTER_TYPE_OPTIONS[2],
+  ENCOUNTER_TYPE_OPTIONS[3],
+  ENCOUNTER_TYPE_OPTIONS[11],
+  ENCOUNTER_TYPE_OPTIONS[12],
+];
+
+const getCaptureSummary = (encounterType: EncounterType) => {
+  switch (encounterType) {
+    case 'Job-Specific Coaching':
+      return 'Observed task flow and logged job-specific coaching notes.';
+    case 'Job-Specific Mobility / Stretching':
+      return 'Captured a mobility and stretching touchpoint on the floor.';
+    case 'Safety Coaching':
+      return 'Documented a safety coaching conversation during active work.';
+    case 'Ergonomic Adjustments':
+      return 'Recorded an ergonomic adjustment made during the shift.';
+    case 'Relationship Development':
+      return 'Logged a relationship development conversation with the employee.';
+    case 'Health and Wellness Coaching':
+      return 'Captured a health and wellness coaching interaction.';
+    default:
+      return 'Captured a sample encounter on mobile.';
+  }
+};
+
+const getCaptureTags = (encounterType: EncounterType) => {
+  switch (encounterType) {
+    case 'Job-Specific Coaching':
+      return ['sample', 'coaching'];
+    case 'Job-Specific Mobility / Stretching':
+      return ['sample', 'mobility'];
+    case 'Safety Coaching':
+      return ['sample', 'safety'];
+    case 'Ergonomic Adjustments':
+      return ['sample', 'ergonomics'];
+    case 'Relationship Development':
+      return ['sample', 'relationship'];
+    case 'Health and Wellness Coaching':
+      return ['sample', 'wellness'];
+    default:
+      return ['sample'];
+  }
+};
+
+const getCompletedEncounterSummary = (encounterType: EncounterType) => {
+  switch (encounterType) {
+    case 'Job-Specific Coaching':
+      return 'Job-specific coaching entry completed in the desktop system.';
+    case 'Job-Specific Mobility / Stretching':
+      return 'Mobility and stretching support recorded from the floor.';
+    case 'Safety Coaching':
+      return 'Safety coaching item closed out in the desktop snapshot.';
+    case 'Ergonomic Adjustments':
+      return 'Ergonomic adjustment completed and documented.';
+    case 'Relationship Development':
+      return 'Relationship development touchpoint completed.';
+    case 'Health and Wellness Coaching':
+      return 'Health and wellness coaching note completed.';
+    default:
+      return 'Encounter completed in the desktop system.';
+  }
+};
 
 const createSampleCaptureRecord = (
   index: number,
@@ -33,6 +101,7 @@ const createSampleCaptureRecord = (
   const timestampIso = timestamp.toISOString();
   const exportBatchId =
     captureStatus === 'exported' ? `${SAMPLE_PREFIX}-capture-batch-001` : null;
+  const encounterType = encounterTypes[index % encounterTypes.length];
 
   return {
     schemaVersion: MOBILE_CAPTURE_SCHEMA_VERSION,
@@ -56,19 +125,16 @@ const createSampleCaptureRecord = (
     employeeMatchConfidence: 'unknown',
     department: index % 2 === 0 ? 'Frontline' : 'Operations',
     station: index % 2 === 0 ? 'Station A' : 'Station C',
-    encounterType: encounterTypes[index % encounterTypes.length],
+    encounterType,
     encounterSubtype: null,
     encounterDate: toLocalDateString(timestamp),
     encounterTime: toLocalTimeString(timestamp),
     occurredAt: timestampIso,
     capturedAt: timestampIso,
     timezone: getCurrentTimezone(),
-    summaryShort:
-      index % 2 === 0
-        ? 'Quick follow-up after shift handoff.'
-        : 'Brief coaching conversation about a floor issue.',
+    summaryShort: getCaptureSummary(encounterType),
     summaryStructured: null,
-    tags: index % 2 === 0 ? ['sample', 'follow-up'] : ['sample', 'coaching'],
+    tags: getCaptureTags(encounterType),
     noteType: 'typed',
     voiceTranscript: null,
     audioFileRef: null,
@@ -124,10 +190,9 @@ const createMockWeekSnapshotPackage = (
         desktopEncounterId: `${SAMPLE_PREFIX}-desktop-encounter-${offsetWeeks + 2}-${index + 1}-${itemIndex + 1}`,
         employeeDisplayName: employeeNames[(index + itemIndex) % employeeNames.length],
         encounterType: encounterTypes[(index + itemIndex) % encounterTypes.length],
-        summaryShort:
-          itemIndex % 2 === 0
-            ? 'Shift-floor check-in completed.'
-            : 'Coaching note logged in desktop system.',
+        summaryShort: getCompletedEncounterSummary(
+          encounterTypes[(index + itemIndex) % encounterTypes.length],
+        ),
         time: itemIndex % 2 === 0 ? '09:15' : '14:40',
       })),
       scheduledReminderCount,

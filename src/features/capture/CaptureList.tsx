@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import SectionCard from '../../components/SectionCard';
 import StatusPill from '../../components/StatusPill';
 import type { MobileEncounterCapture } from '../../contracts/mobileContracts';
 import { toLocalDateTimeLabel } from '../../lib/dateTime';
@@ -75,11 +74,14 @@ const CaptureList = ({
     .filter((group) => group.items.length > 0);
 
   return (
-    <SectionCard
-      className="section-card--capture-list"
-      title="Local Captures"
-      subtitle="Mobile captures stay local until you export a versioned JSON package."
-      action={
+    <div className="capture-list-panel">
+      <div className="section-card__body-header">
+        <div>
+          <p className="section-card__body-title">Saved On This Device</p>
+          <p className="section-card__body-copy">
+            Mobile captures stay local until you export a versioned JSON package.
+          </p>
+        </div>
         <div className="section-card__action-stack">
           <button
             type="button"
@@ -93,8 +95,8 @@ const CaptureList = ({
             Export one JSON package for later desktop import. Drafts are not included.
           </small>
         </div>
-      }
-    >
+      </div>
+
       <p className="helper-copy">
         Select ready items below, then export them as one package. Saved captures stay local until
         you do that export.
@@ -189,7 +191,7 @@ const CaptureList = ({
           ))}
         </div>
       )}
-    </SectionCard>
+    </div>
   );
 };
 

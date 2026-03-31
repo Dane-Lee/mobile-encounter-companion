@@ -1,3 +1,5 @@
+import type { EncounterType } from './encounterTypes';
+
 export const MOBILE_CAPTURE_SCHEMA_VERSION = '1.0.0';
 export const MOBILE_CAPTURE_EXPORT_SCHEMA_VERSION = '1.0.0';
 export const MOBILE_WEEK_SNAPSHOT_SCHEMA_VERSION = '1.0.0';
@@ -43,7 +45,7 @@ export interface MobileEncounterCapture {
   employeeMatchConfidence: EmployeeMatchConfidence;
   department: string | null;
   station: string | null;
-  encounterType: string;
+  encounterType: EncounterType;
   encounterSubtype: string | null;
   encounterDate: string;
   encounterTime: string;
@@ -86,7 +88,7 @@ export interface WeekSummary {
 export interface CompletedEncounterItem {
   desktopEncounterId: string;
   employeeDisplayName: string;
-  encounterType: string;
+  encounterType: EncounterType;
   summaryShort: string;
   time: string;
 }
@@ -153,7 +155,7 @@ export interface StoredMobileWeekSnapshot {
 
 export interface CaptureFormValues {
   employeeDisplayName: string;
-  encounterType: string;
+  encounterType: EncounterType;
   summaryShort: string;
   tagsText: string;
   followUpNeeded: boolean;
@@ -171,12 +173,3 @@ export const PACKAGE_VERSION_INFO: VersionInfo = {
   mobileCaptureExportSchemaVersion: MOBILE_CAPTURE_EXPORT_SCHEMA_VERSION,
   mobileWeekSnapshotSchemaVersion: MOBILE_WEEK_SNAPSHOT_SCHEMA_VERSION,
 };
-
-export const ENCOUNTER_TYPE_OPTIONS = [
-  'Check-in',
-  'Coaching',
-  'Recognition',
-  'Follow-up',
-  'Incident',
-  'Support',
-];

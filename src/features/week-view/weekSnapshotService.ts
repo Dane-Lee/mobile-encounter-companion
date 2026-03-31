@@ -2,6 +2,7 @@ import type {
   MobileWeekSnapshotPackage,
   StoredMobileWeekSnapshot,
 } from '../../contracts/mobileContracts';
+import { normalizeEncounterType } from '../../contracts/encounterTypes';
 import { validateMobileWeekSnapshotPackage } from '../../contracts/validators';
 import {
   listStoredWeekSnapshots,
@@ -22,6 +23,81 @@ const isSameWeekRange = (
 ) =>
   left.weekStartDate === right.weekStartDate && left.weekEndDate === right.weekEndDate;
 
+const normalizeImportedWeekSnapshotValue = (value: unknown) => {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !('days' in value) ||
+    !Array.isArray((value as { days?: unknown }).days)
+  ) {
+    return value;
+  }
+
+  return normalizeWeekSnapshotPackageEncounterTypes(value as MobileWeekSnapshotPackage);
+};
+
+const normalizeWeekSnapshotPackageEncounterTypes = (
+  weekSnapshotPackage: MobileWeekSnapshotPackage,
+): MobileWeekSnapshotPackage => {
+  let didChange = false;
+
+  const days = weekSnapshotPackage.days.map((day) => {
+    const completedEncounterItems = day.completedEncounterItems.map((item) => {
+      const normalizedEncounterType = normalizeEncounterType(item.encounterType);
+
+      if (!normalizedEncounterType || normalizedEncounterType === item.encounterType) {
+        return item;
+      }
+
+      didChange = true;
+      return {
+        ...item,
+        encounterType: normalizedEncounterType,
+      };
+    });
+
+    const dayDidChange = completedEncounterItems.some(
+      (item, index) => item !== day.completedEncounterItems[index],
+    );
+
+    return dayDidChange
+      ? {
+          ...day,
+          completedEncounterItems,
+        }
+      : day;
+  });
+
+  return didChange
+    ? {
+        ...weekSnapshotPackage,
+        days,
+      }
+    : weekSnapshotPackage;
+};
+
+const normalizeStoredWeekSnapshot = (snapshot: StoredMobileWeekSnapshot) => {
+  const normalizedPackage = normalizeWeekSnapshotPackageEncounterTypes(snapshot.package);
+
+  return normalizedPackage === snapshot.package
+    ? snapshot
+    : {
+        ...snapshot,
+        package: normalizedPackage,
+      };
+};
+
+const normalizeStoredWeekSnapshots = async (snapshots: StoredMobileWeekSnapshot[]) => {
+  const normalizedSnapshots = snapshots.map(normalizeStoredWeekSnapshot);
+  const hasChanges = normalizedSnapshots.some((snapshot, index) => snapshot !== snapshots[index]);
+
+  if (hasChanges) {
+    await saveStoredWeekSnapshots(normalizedSnapshots);
+  }
+
+  return normalizedSnapshots;
+};
+
 export const sortWeekSnapshotsForDisplay = (snapshots: StoredMobileWeekSnapshot[]) =>
   [...snapshots].sort((left, right) => {
     if (left.selectedForDisplay !== right.selectedForDisplay) {
@@ -40,7 +116,9 @@ export const sortWeekSnapshotsForDisplay = (snapshots: StoredMobileWeekSnapshot[
   });
 
 export const listWeekSnapshotsForDisplay = async () =>
-  sortWeekSnapshotsForDisplay(await listStoredWeekSnapshots());
+  sortWeekSnapshotsForDisplay(
+    await normalizeStoredWeekSnapshots(await listStoredWeekSnapshots()),
+  );
 
 export const getActiveWeekSnapshot = (snapshots: StoredMobileWeekSnapshot[]) => {
   const orderedSnapshots = sortWeekSnapshotsForDisplay(snapshots);
@@ -64,7 +142,8 @@ export const parseWeekSnapshotImportFile = async (file: File) => {
     throw new Error(`${file.name} is not valid JSON.`);
   }
 
-  const validationResult = validateMobileWeekSnapshotPackage(parsed);
+  const normalizedPackage = normalizeImportedWeekSnapshotValue(parsed);
+  const validationResult = validateMobileWeekSnapshotPackage(normalizedPackage);
   if (!validationResult.ok) {
     throw new Error(validationResult.errors.join(' '));
   }
@@ -75,9 +154,10 @@ export const parseWeekSnapshotImportFile = async (file: File) => {
 export const importValidatedWeekSnapshotPackage = async (
   weekSnapshotPackage: MobileWeekSnapshotPackage,
 ) => {
-  const existingSnapshots = await listStoredWeekSnapshots();
+  const existingSnapshots = await normalizeStoredWeekSnapshots(await listStoredWeekSnapshots());
   const importedToMobileAt = new Date().toISOString();
-  const localWeekSnapshotId = `local-${weekSnapshotPackage.packageId}`;
+  const normalizedPackage = normalizeWeekSnapshotPackageEncounterTypes(weekSnapshotPackage);
+  const localWeekSnapshotId = `local-${normalizedPackage.packageId}`;
   const replacingExisting = existingSnapshots.find(
     (snapshot) => snapshot.localWeekSnapshotId === localWeekSnapshotId,
   );
@@ -88,14 +168,14 @@ export const importValidatedWeekSnapshotPackage = async (
   const updatedExistingSnapshots = existingSnapshots
     .filter((snapshot) => snapshot.localWeekSnapshotId !== localWeekSnapshotId)
     .map((snapshot) => {
-      const sameWeek = isSameWeekRange(snapshot.package, weekSnapshotPackage);
+      const sameWeek = isSameWeekRange(snapshot.package, normalizedPackage);
 
       return {
         ...snapshot,
         // snapshotStatus tracks local package lineage, not whether the represented
         // week is the current calendar week.
         snapshotStatus: sameWeek ? 'superseded' : snapshot.snapshotStatus,
-        selectedForDisplay: weekSnapshotPackage.isCurrentWeek
+        selectedForDisplay: normalizedPackage.isCurrentWeek
           ? false
           : snapshot.selectedForDisplay,
       };
@@ -106,10 +186,10 @@ export const importValidatedWeekSnapshotPackage = async (
     importedToMobileAt,
     snapshotStatus: 'current',
     selectedForDisplay:
-      weekSnapshotPackage.isCurrentWeek ||
+      normalizedPackage.isCurrentWeek ||
       replacingExisting?.selectedForDisplay === true ||
       !hasSelectedWeek,
-    package: weekSnapshotPackage,
+    package: normalizedPackage,
   };
 
   await saveStoredWeekSnapshots([...updatedExistingSnapshots, importedSnapshot]);
@@ -120,7 +200,7 @@ export const importWeekSnapshotFile = async (file: File) =>
   importValidatedWeekSnapshotPackage(await parseWeekSnapshotImportFile(file));
 
 export const selectWeekSnapshotForDisplay = async (localWeekSnapshotId: string) => {
-  const existingSnapshots = await listStoredWeekSnapshots();
+  const existingSnapshots = await normalizeStoredWeekSnapshots(await listStoredWeekSnapshots());
   const targetSnapshot = existingSnapshots.find(
     (snapshot) =>
       snapshot.localWeekSnapshotId === localWeekSnapshotId &&

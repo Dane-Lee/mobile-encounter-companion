@@ -6,6 +6,7 @@ import type {
   OverdueReminderItem,
   ReminderItem,
 } from './mobileContracts';
+import { isEncounterType } from './encounterTypes';
 
 interface ValidationSuccess<T> {
   ok: true;
@@ -93,7 +94,7 @@ const validateWeekDay = (value: unknown): value is MobileWeekSnapshotDay =>
       isObject(item) &&
       isString(item.desktopEncounterId) &&
       isString(item.employeeDisplayName) &&
-      isString(item.encounterType) &&
+      isEncounterType(item.encounterType) &&
       isString(item.summaryShort) &&
       isString(item.time),
   ) &&
@@ -145,7 +146,7 @@ export const validateMobileEncounterCapture = (
     isOneOf(value.employeeMatchConfidence, ['exact', 'likely', 'manual', 'unknown'] as const) &&
     isNullableString(value.department) &&
     isNullableString(value.station) &&
-    isString(value.encounterType) &&
+    isEncounterType(value.encounterType) &&
     isNullableString(value.encounterSubtype) &&
     isString(value.encounterDate) &&
     isString(value.encounterTime) &&

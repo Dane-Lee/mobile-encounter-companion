@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
-import { ENCOUNTER_TYPE_OPTIONS, type CaptureFormValues } from '../../contracts/mobileContracts';
+import InfoDialog from '../../components/InfoDialog';
+import type { CaptureFormValues } from '../../contracts/mobileContracts';
+import {
+  ENCOUNTER_TYPE_OPTIONS,
+  type EncounterType,
+} from '../../contracts/encounterTypes';
 import SectionCard from '../../components/SectionCard';
-import { getCurrentTimezone, toLocalDateTimeLabel } from '../../lib/dateTime';
+import { toLocalDateTimeLabel } from '../../lib/dateTime';
 
 interface CaptureFormProps {
   onSave: (values: CaptureFormValues, saveMode: 'draft' | 'ready') => Promise<void>;
@@ -19,6 +24,7 @@ const initialValues: CaptureFormValues = {
 
 const CaptureForm = ({ onSave, disabled = false }: CaptureFormProps) => {
   const [values, setValues] = useState<CaptureFormValues>(initialValues);
+  const [isFollowUpInfoOpen, setIsFollowUpInfoOpen] = useState(false);
   const [timestampLabel, setTimestampLabel] = useState(
     toLocalDateTimeLabel(new Date().toISOString()),
   );
@@ -64,7 +70,9 @@ const CaptureForm = ({ onSave, disabled = false }: CaptureFormProps) => {
           <span>Encounter type</span>
           <select
             value={values.encounterType}
-            onChange={(event) => updateValue('encounterType', event.target.value)}
+            onChange={(event) =>
+              updateValue('encounterType', event.target.value as EncounterType)
+            }
             disabled={disabled}
           >
             {ENCOUNTER_TYPE_OPTIONS.map((option) => (
@@ -92,27 +100,33 @@ const CaptureForm = ({ onSave, disabled = false }: CaptureFormProps) => {
           <input
             value={values.tagsText}
             onChange={(event) => updateValue('tagsText', event.target.value)}
-            placeholder="coaching, follow-up, customer"
+            placeholder="mobility, wellness, follow-up"
             autoComplete="off"
             disabled={disabled}
           />
         </label>
 
-        <label className="toggle-field">
-          <input
-            type="checkbox"
-            checked={values.followUpNeeded}
-            onChange={(event) => updateValue('followUpNeeded', event.target.checked)}
-            disabled={disabled}
-          />
-          <div>
-            <span>Follow-up needed</span>
-            <small>
-              Use this when the desktop side should review follow-up work later. The mobile app
-              does not schedule it by itself.
-            </small>
-          </div>
-        </label>
+        <div className="toggle-field">
+          <label className="toggle-field__main">
+            <input
+              type="checkbox"
+              checked={values.followUpNeeded}
+              onChange={(event) => updateValue('followUpNeeded', event.target.checked)}
+              disabled={disabled}
+            />
+            <div>
+              <span>Follow-up needed</span>
+            </div>
+          </label>
+          <button
+            type="button"
+            className="info-button"
+            aria-label="Explain follow-up needed"
+            onClick={() => setIsFollowUpInfoOpen(true)}
+          >
+            i
+          </button>
+        </div>
 
         {values.followUpNeeded ? (
           <label className="field">
@@ -128,11 +142,7 @@ const CaptureForm = ({ onSave, disabled = false }: CaptureFormProps) => {
       </div>
 
       <div className="capture-form__footer">
-        <p>
-          Auto timestamp: {timestampLabel}
-          <br />
-          Timezone: {getCurrentTimezone()}
-        </p>
+        <p>Auto timestamp: {timestampLabel}</p>
         <div className="button-row">
           <button
             type="button"
@@ -152,6 +162,13 @@ const CaptureForm = ({ onSave, disabled = false }: CaptureFormProps) => {
           </button>
         </div>
       </div>
+
+      <InfoDialog
+        open={isFollowUpInfoOpen}
+        title="Follow-Up Needed"
+        description="Use this when the desktop side should review follow-up work later. The mobile app does not schedule it by itself."
+        onClose={() => setIsFollowUpInfoOpen(false)}
+      />
     </SectionCard>
   );
 };

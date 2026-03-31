@@ -162,6 +162,23 @@ The mobile app does not attempt to merge these flows into one record system, and
 
 All package contracts live in [src/contracts/mobileContracts.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/contracts/mobileContracts.ts) and are validated in [src/contracts/validators.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/contracts/validators.ts).
 
+## Encounter Types
+
+The canonical encounter type list now lives in [src/contracts/encounterTypes.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/contracts/encounterTypes.ts).
+
+New form entry, validation, export, and imported week snapshot handling use only that canonical list.
+
+Temporary legacy compatibility mapping is also defined there for older local records and older imported packages that still use the retired labels:
+
+- `Check-in` -> `Relationship Development`
+- `Coaching` -> `Job-Specific Coaching`
+- `Recognition` -> `Relationship Development`
+- `Follow-up` -> `PA Follow-Ups`
+- `Incident` -> `Safety Coaching`
+- `Support` -> `General Medical Coaching`
+
+That mapping is only used to normalize legacy data at the service/import layer so the current UI and exported data stay on the new encounter type set.
+
 ### A. `MobileEncounterCapture`
 
 Created locally from `Capture Mode`. Required UI entry points in Phase 1:
