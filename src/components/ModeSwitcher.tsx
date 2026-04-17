@@ -1,4 +1,4 @@
-type AppMode = 'capture' | 'weekView';
+export type AppMode = 'capture' | 'weekView' | 'prioritization';
 
 interface ModeSwitcherProps {
   mode: AppMode;
@@ -24,6 +24,15 @@ const ModeSwitcher = ({ mode, onChange }: ModeSwitcherProps) => (
       onClick={() => onChange('weekView')}
     >
       Week View
+    </button>
+    <button
+      type="button"
+      role="tab"
+      aria-selected={mode === 'prioritization'}
+      className={mode === 'prioritization' ? 'is-active' : ''}
+      onClick={() => onChange('prioritization')}
+    >
+      Priority List
     </button>
   </div>
 );

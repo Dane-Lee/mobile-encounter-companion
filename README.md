@@ -1,13 +1,21 @@
 # Daily Encounter Tracking Mobile Companion
 
-Phase 1 local-first mobile companion for the existing Daily Encounter Tracking desktop/laptop workflow.
+Local-first mobile companion for the existing Daily Encounter Tracking desktop workflow.
 
 This app is intentionally narrow:
 
-- `Capture Mode` for fast encounter entry on the floor
-- `Week View Mode` for importing and viewing a single desktop-generated week snapshot at a time
+- `Capture Mode` for fast floor capture
+- `Week View Mode` for read-only weekly reference
+- `Prioritization Mode` for a daily prioritization list derived from mobile capture data plus temporary in-app setup
 
-It is not a full mobile port of the desktop app. There is no auth, cloud backend, real-time sync, analytics, admin area, or desktop navigation clone.
+It is not a full mobile port of the desktop app. There is no auth, analytics, admin area, or full desktop navigation clone.
+
+The mobile app now supports the shared backend sync contract in addition to its local-first storage:
+
+- mobile uploads `mobile_capture_entry` records
+- mobile fetches desktop-authored `weekly_snapshot` records
+
+If sync env vars are not configured, the app still works locally on the device.
 
 ## Stack
 
@@ -16,6 +24,7 @@ It is not a full mobile port of the desktop app. There is no auth, cloud backend
 - Vite
 - Native IndexedDB
 - Manual PWA manifest + service worker
+- Shared backend sync via `fetch` and Vite environment variables
 
 ## Run
 
@@ -36,17 +45,19 @@ Build output:
 - Output directory: `dist`
 - Hosting model: static Vite single-page app
 - Local-first storage: browser IndexedDB on the hosted origin
+- Optional sync: shared backend API configured through `VITE_SYNC_*`
 
 ## Deployment
 
-This project is ready for simple static hosting on Netlify or Vercel.
+This project is ready for static hosting on Netlify or Vercel.
 
 Hosting notes:
 
-- The app stays local-first when hosted. Captures and imported snapshots are still stored in the phone browser via IndexedDB.
-- No backend, cloud sync, auth, or server database is required.
+- The app stays local-first when hosted. Captures and cached week snapshots still live in the phone browser via IndexedDB.
+- No server-rendered backend is required for the web app itself.
+- If you want sync enabled, point the app at the shared backend API using the environment variables below.
 - The app is a single-page app, so Netlify and Vercel config files are included for safe root routing and fresh `index.html` / service worker fetches.
-- Because the storage is browser-local, data stays tied to the specific phone/browser/origin you use.
+- Because IndexedDB is browser-local, cached data stays tied to the specific phone/browser/origin you use.
 
 ### GitHub Push
 
@@ -77,10 +88,11 @@ git push
 4. Confirm the build settings:
    - Build command: `npm run build`
    - Publish directory: `dist`
-5. Deploy the site.
-6. Open the Netlify URL on your phone.
+5. Add the sync env vars below if you want backend sync enabled.
+6. Deploy the site.
+7. Open the Netlify URL on your phone.
 
-This repo includes [netlify.toml](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/netlify.toml), so Netlify will pick up the expected build settings automatically.
+This repo includes [netlify.toml](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/netlify.toml).
 
 ### Vercel Deploy
 
@@ -91,21 +103,51 @@ This repo includes [netlify.toml](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20
    - Framework preset: `Vite`
    - Build command: `npm run build`
    - Output directory: `dist`
-5. Deploy the project.
-6. Open the Vercel URL on your phone.
+5. Add the sync env vars below if you want backend sync enabled.
+6. Deploy the project.
+7. Open the Vercel URL on your phone.
 
-This repo includes [vercel.json](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/vercel.json), so Vercel has explicit build, output, cache, and SPA rewrite settings.
+This repo includes [vercel.json](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/vercel.json).
+
+## Shared Sync Layer
+
+The sync model is backend-mediated only. Mobile and desktop do not communicate directly.
+
+Configure the hosted mobile app with these environment variables when you want sync enabled:
+
+```bash
+VITE_SYNC_API_BASE_URL=https://your-sync-api.example.com
+VITE_SYNC_USER_ID=your-user-id
+VITE_SYNC_WORKSITE_ID=your-worksite-id
+VITE_SYNC_DEVICE_ID=optional-device-id
+VITE_SYNC_CONTRACT_VERSION=1.0.0
+```
+
+Expected mobile-side endpoints:
+
+- `POST /mobile_capture_entries`
+- `GET /weekly_snapshots?user_id=...&worksite_id=...`
+- `GET /prioritization_settings?user_id=...&worksite_id=...`
+- `PUT /prioritization_settings`
+- `GET /daily_prioritization_state?user_id=...&worksite_id=...&date=YYYY-MM-DD`
+- `PUT /daily_prioritization_state`
+
+The mobile app validates both shared sync payload types before it writes them into local storage.
 
 ## App Structure
 
 ```text
 src/
+  app/
+    useCompanionData.ts
   components/
     ModeSwitcher.tsx
     SectionCard.tsx
     StatusPill.tsx
   contracts/
+    encounterTypes.ts
     mobileContracts.ts
+    prioritizationContracts.ts
     validators.ts
   features/
     capture/
@@ -113,6 +155,23 @@ src/
       CaptureList.tsx
       CaptureMode.tsx
       captureRecordFactory.ts
+      captureService.ts
+      captureSyncService.ts
+    guide/
+      GuideModal.tsx
+    prioritization/
+      PrioritizationMode.tsx
+      PrioritizationList.tsx
+      PrioritizationDetail.tsx
+      prioritizationConfig.ts
+      prioritizationDerivation.ts
+      prioritizationHelpers.ts
+      prioritizationStateService.ts
+      prioritizationSyncService.ts
+      PrioritizationSettingsPanel.tsx
+      usePrioritizationWorkflow.ts
+      types.ts
+      README.md
     utilities/
       UtilitiesPanel.tsx
     week-view/
@@ -120,6 +179,8 @@ src/
       WeekSummaryCard.tsx
       WeekViewMode.tsx
       weekSnapshotHelpers.ts
+      weekSnapshotService.ts
+      weeklySnapshotSyncService.ts
   lib/
     dateTime.ts
     download.ts
@@ -133,40 +194,96 @@ src/
   storage/
     indexedDb.ts
     captureStore.ts
+    dailyPrioritizationStateStore.ts
+    prioritizationSettingsStore.ts
     weekSnapshotStore.ts
+  sync/
+    syncApi.ts
+    syncConfig.ts
+    syncContracts.ts
+    syncMappers.ts
+    syncValidators.ts
+    useMobileSyncStatus.ts
 ```
 
 ## Local Storage Model
 
-The app uses one IndexedDB database with two separate object stores to keep the two domains isolated:
+The app uses one IndexedDB database with four separate object stores:
 
 - `mobileEncounterCaptures`
   Stores `MobileEncounterCapture` records created on the phone.
 - `storedMobileWeekSnapshots`
-  Stores `StoredMobileWeekSnapshot` records imported from desktop-generated week snapshot packages.
+  Stores `StoredMobileWeekSnapshot` records cached on the phone.
+- `prioritizationSettings`
+  Stores local station-risk settings for prioritization.
+- `dailyPrioritizationState`
+  Stores today’s roster, item overrides, and execution records for prioritization.
 
-This separation is deliberate. Mobile capture records and desktop week snapshot packages are not merged into a shared ambiguous store.
+This separation is deliberate. Mobile-authored captures and desktop-authored week snapshots are not merged into one ambiguous store.
 
 ## Data Directions
 
-The app intentionally supports two separate transfer directions:
+The app intentionally supports two distinct directions:
 
-- `Mobile -> Desktop`
-  Mobile-authored capture records are exported as a versioned JSON package for later desktop import.
-- `Desktop -> Mobile`
-  Desktop-authored weekly read models are imported as a versioned JSON package for local mobile viewing.
+- `Mobile -> Backend -> Desktop`
+  Mobile-authored capture records are uploaded as `mobile_capture_entry` records for later desktop review/import flow.
+- `Desktop -> Backend -> Mobile`
+  Desktop-authored weekly read models are published as `weekly_snapshot` records for mobile viewing.
 
-The mobile app does not attempt to merge these flows into one record system, and it does not do real-time sync in Phase 1.
+The app does not do real-time sync.
 
-## Package Contracts
+Local JSON import/export utilities still exist for local testing and fallback workflows, but they are not the shared sync path.
 
-All package contracts live in [src/contracts/mobileContracts.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/contracts/mobileContracts.ts) and are validated in [src/contracts/validators.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/contracts/validators.ts).
+## Contracts
+
+Local package contracts live in [src/contracts/mobileContracts.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/contracts/mobileContracts.ts) and are validated in [src/contracts/validators.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/contracts/validators.ts).
+
+Shared backend sync contracts live in [src/sync/syncContracts.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/sync/syncContracts.ts) and are validated in [src/sync/syncValidators.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/sync/syncValidators.ts).
+
+### `MobileEncounterCapture`
+
+Created locally from `Capture Mode`.
+
+Primary UI fields:
+
+- `employeeDisplayName`
+- `encounterType`
+- `summaryShort`
+- `tags`
+- `followUpNeeded`
+- optional `followUpSuggestedDate`
+
+Each record also carries local sync metadata so the phone can show whether it is still local-only, uploaded, resolved, or in sync error.
+
+### `MobileCaptureExportPackage`
+
+Created locally when the user downloads a JSON package. This is a local utility boundary, not the shared backend sync contract.
+
+### `MobileWeekSnapshotPackage`
+
+Used for manual local JSON import. The package is validated before it is accepted into IndexedDB.
+
+### `StoredMobileWeekSnapshot`
+
+Wraps each cached week package with mobile-specific metadata:
+
+- `localWeekSnapshotId`
+- `importedToMobileAt`
+- `snapshotStatus`
+- `selectedForDisplay`
+- sync origin/status fields for backend-fetched snapshots
+
+`snapshotStatus` tracks local package lineage, not whether the represented week is the current calendar week:
+
+- `current` = latest retained local package for that week
+- `superseded` = older local copy replaced by a newer version
+- `archived` = intentionally retired from normal display
+
+Calendar-current behavior still comes from `package.isCurrentWeek`.
 
 ## Encounter Types
 
-The canonical encounter type list now lives in [src/contracts/encounterTypes.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/contracts/encounterTypes.ts).
-
-New form entry, validation, export, and imported week snapshot handling use only that canonical list.
+The canonical encounter type list lives in [src/contracts/encounterTypes.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/contracts/encounterTypes.ts).
 
 Temporary legacy compatibility mapping is also defined there for older local records and older imported packages that still use the retired labels:
 
@@ -177,45 +294,7 @@ Temporary legacy compatibility mapping is also defined there for older local rec
 - `Incident` -> `Safety Coaching`
 - `Support` -> `General Medical Coaching`
 
-That mapping is only used to normalize legacy data at the service/import layer so the current UI and exported data stay on the new encounter type set.
-
-### A. `MobileEncounterCapture`
-
-Created locally from `Capture Mode`. Required UI entry points in Phase 1:
-
-- `employeeDisplayName`
-- `encounterType`
-- `summaryShort`
-- `tags`
-- `followUpNeeded`
-- optional `followUpSuggestedDate`
-
-The app auto-fills timestamps and default workflow fields when saving.
-
-### B. `MobileCaptureExportPackage`
-
-Created locally when the user selects ready/exportable capture records and downloads one JSON package. Export validation runs before download.
-
-### C. `MobileWeekSnapshotPackage`
-
-Imported from the desktop app. The package is validated before it is accepted into IndexedDB.
-
-### D. `StoredMobileWeekSnapshot`
-
-Wraps each imported desktop week package with mobile-specific import metadata:
-
-- `localWeekSnapshotId`
-- `importedToMobileAt`
-- `snapshotStatus`
-- `selectedForDisplay`
-
-`snapshotStatus` tracks local package lineage, not whether the package represents the current calendar week:
-
-- `current` = latest retained local package for that week
-- `superseded` = older local copy replaced by a newer import for the same week
-- `archived` = intentionally retired from normal display
-
-Calendar-current behavior continues to come from `package.isCurrentWeek`.
+That mapping is only used to normalize legacy data at the service/import layer.
 
 ## Key Behaviors
 
@@ -226,18 +305,32 @@ Calendar-current behavior continues to come from `package.isCurrentWeek`.
 - Save as `draft` or `ready_for_export`
 - Grouped local capture list by status
 - Promote drafts to ready
-- Select and export multiple captures as one versioned JSON file
+- Show local sync status for each capture
+- Select and upload multiple captures as shared `mobile_capture_entry` records
+- Optional local JSON download remains available as a local utility
 
 ### Week View Mode
 
-- Import desktop-generated week snapshot JSON
+- Fetch backend `weekly_snapshot` records for the configured user/worksite
 - Validate before saving
 - Default to the currently selected week, then current week if present
 - View only one week at a time
-- Switch between imported week snapshots
+- Switch between cached week snapshots
 - Weekly totals summary card
 - Compact read-only daily breakdown
 - Overdue reminders are visually emphasized
+- Optional local JSON import remains available as a local utility
+
+### Prioritization Mode
+
+- Uses a fixed seven-bucket prioritization order
+- Keeps employee-based and station-based items distinct
+- Derives live items from mobile captures, a daily roster, and station risk settings
+- Supports lightweight execution records for floor-action tracking
+- Persists prioritization settings and daily state locally in IndexedDB
+- Supports optional backend sync for prioritization settings and daily state
+- Scaffolds station scan sections without building a full scan engine
+- Stays isolated from capture creation and week-view data flows while supporting an “Open in Capture” handoff
 
 ### Utilities
 
@@ -258,11 +351,17 @@ Static sample JSON files live in `public/samples/`:
 
 ## Integration Notes
 
-Phase 1 keeps future desktop integration isolated at explicit boundaries:
+The mobile-side sync implementation is isolated at explicit boundaries:
 
-- capture export package creation in [src/features/capture/captureRecordFactory.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/features/capture/captureRecordFactory.ts)
-- week snapshot import validation in [src/contracts/validators.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/contracts/validators.ts)
-- week snapshot persistence in [src/storage/weekSnapshotStore.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/storage/weekSnapshotStore.ts)
+- local capture creation in [src/features/capture/captureRecordFactory.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/features/capture/captureRecordFactory.ts)
+- local capture workflow in [src/features/capture/captureService.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/features/capture/captureService.ts)
+- mobile capture upload orchestration in [src/features/capture/captureSyncService.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/features/capture/captureSyncService.ts)
+- shared backend API access in [src/sync/syncApi.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/sync/syncApi.ts)
+- shared sync contract validation in [src/sync/syncValidators.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/sync/syncValidators.ts)
+- local week snapshot workflow in [src/features/week-view/weekSnapshotService.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/features/week-view/weekSnapshotService.ts)
+- backend weekly snapshot fetch orchestration in [src/features/week-view/weeklySnapshotSyncService.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/features/week-view/weeklySnapshotSyncService.ts)
 - app-level orchestration in [src/app/useCompanionData.ts](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/app/useCompanionData.ts)
 
-If the desktop import/export contract changes later, those files are the intended update points rather than the view components.
+If the shared sync spec changes later, those files are the intended update points rather than the view components.
+
+The prioritization extension is intentionally separate from the existing mobile capture/week-view flows. ETS is still the intended future source of truth for prioritization inputs, status, and recommendations, but today’s implementation lives in [src/features/prioritization/](/C:/Users/dlee5/OneDrive/Desktop/ATI/Mobile%20Encounter%20Tracker%20Companion/src/features/prioritization/) and is operational using mobile-derived data plus temporary in-app settings and optional backend sync.

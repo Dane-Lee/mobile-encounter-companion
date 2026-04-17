@@ -14,6 +14,7 @@ import {
   ENCOUNTER_TYPE_OPTIONS,
   type EncounterType,
 } from '../contracts/encounterTypes';
+import { DEFAULT_SITE_CAPTURE_OPTIONS } from '../config/siteCaptureOptions';
 import {
   addDays,
   addWeeks,
@@ -26,6 +27,8 @@ import {
 
 const SAMPLE_PREFIX = 'sample';
 const employeeNames = ['Jordan Hale', 'Terry Flores', 'Mina Patel', 'DeAndre Ross', 'Alicia Kim'];
+const departments: string[] = [...DEFAULT_SITE_CAPTURE_OPTIONS.departments];
+const stations: string[] = [...DEFAULT_SITE_CAPTURE_OPTIONS.stations];
 const encounterTypes: EncounterType[] = [
   ENCOUNTER_TYPE_OPTIONS[0],
   ENCOUNTER_TYPE_OPTIONS[1],
@@ -123,8 +126,8 @@ const createSampleCaptureRecord = (
     employeeDisplayName: employeeNames[index % employeeNames.length],
     employeeId: null,
     employeeMatchConfidence: 'unknown',
-    department: index % 2 === 0 ? 'Frontline' : 'Operations',
-    station: index % 2 === 0 ? 'Station A' : 'Station C',
+    department: departments[index % departments.length],
+    station: stations[index % stations.length],
     encounterType,
     encounterSubtype: null,
     encounterDate: toLocalDateString(timestamp),
@@ -145,6 +148,16 @@ const createSampleCaptureRecord = (
     linkedPriorEncounterId: null,
     createdOnDeviceAt: timestampIso,
     updatedOnDeviceAt: timestampIso,
+    syncStatus:
+      captureStatus === 'exported'
+        ? 'uploaded'
+        : captureStatus === 'ready_for_export'
+          ? 'local_only'
+          : 'local_only',
+    syncError: null,
+    syncRecordId: captureStatus === 'exported' ? `${SAMPLE_PREFIX}-sync-capture-${index + 1}` : null,
+    syncUpdatedAt: captureStatus === 'exported' ? timestampIso : null,
+    importResolution: null,
   };
 };
 
@@ -265,6 +278,14 @@ export const createMockStoredWeekSnapshots = (): StoredMobileWeekSnapshot[] =>
     localWeekSnapshotId: `${SAMPLE_PREFIX}-stored-week-${index + 1}`,
     importedToMobileAt: new Date().toISOString(),
     snapshotStatus: snapshotPackage.isCurrentWeek ? 'current' : 'superseded',
+    syncOrigin: 'manual',
+    syncStatus: 'not_published',
+    syncError: null,
+    syncRecordId: null,
+    syncUpdatedAt: new Date().toISOString(),
+    syncUserId: null,
+    syncWorksiteId: null,
+    syncVersion: snapshotPackage.desktopDataVersion,
     selectedForDisplay:
       snapshotPackage.isCurrentWeek || (!packages.some((item) => item.isCurrentWeek) && index === 0),
     package: snapshotPackage,

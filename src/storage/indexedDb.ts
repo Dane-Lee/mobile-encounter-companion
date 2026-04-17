@@ -1,9 +1,11 @@
 const DB_NAME = 'daily-encounter-mobile-companion';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export const STORE_NAMES = {
   captures: 'mobileEncounterCaptures',
   weekSnapshots: 'storedMobileWeekSnapshots',
+  prioritizationSettings: 'prioritizationSettings',
+  dailyPrioritizationState: 'dailyPrioritizationState',
 } as const;
 
 type StoreName = (typeof STORE_NAMES)[keyof typeof STORE_NAMES];
@@ -37,6 +39,16 @@ const openDatabase = () => {
 
         if (!database.objectStoreNames.contains(STORE_NAMES.weekSnapshots)) {
           database.createObjectStore(STORE_NAMES.weekSnapshots, { keyPath: 'localWeekSnapshotId' });
+        }
+
+        if (!database.objectStoreNames.contains(STORE_NAMES.prioritizationSettings)) {
+          database.createObjectStore(STORE_NAMES.prioritizationSettings, { keyPath: 'settingsId' });
+        }
+
+        if (!database.objectStoreNames.contains(STORE_NAMES.dailyPrioritizationState)) {
+          database.createObjectStore(STORE_NAMES.dailyPrioritizationState, {
+            keyPath: 'prioritizationDate',
+          });
         }
       };
 

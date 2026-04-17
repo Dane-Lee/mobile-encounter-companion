@@ -4,6 +4,7 @@ import type {
 } from '../../contracts/mobileContracts';
 import { normalizeEncounterType } from '../../contracts/encounterTypes';
 import { validateMobileWeekSnapshotPackage } from '../../contracts/validators';
+import { withStoredWeekSnapshotSyncDefaults } from '../../sync/syncMappers';
 import {
   listStoredWeekSnapshots,
   saveStoredWeekSnapshots,
@@ -77,12 +78,13 @@ const normalizeWeekSnapshotPackageEncounterTypes = (
 };
 
 const normalizeStoredWeekSnapshot = (snapshot: StoredMobileWeekSnapshot) => {
-  const normalizedPackage = normalizeWeekSnapshotPackageEncounterTypes(snapshot.package);
+  const snapshotWithSyncDefaults = withStoredWeekSnapshotSyncDefaults(snapshot);
+  const normalizedPackage = normalizeWeekSnapshotPackageEncounterTypes(snapshotWithSyncDefaults.package);
 
-  return normalizedPackage === snapshot.package
+  return normalizedPackage === snapshotWithSyncDefaults.package && snapshotWithSyncDefaults === snapshot
     ? snapshot
     : {
-        ...snapshot,
+        ...snapshotWithSyncDefaults,
         package: normalizedPackage,
       };
 };
@@ -185,6 +187,14 @@ export const importValidatedWeekSnapshotPackage = async (
     localWeekSnapshotId,
     importedToMobileAt,
     snapshotStatus: 'current',
+    syncOrigin: 'manual',
+    syncStatus: 'not_published',
+    syncError: null,
+    syncRecordId: null,
+    syncUpdatedAt: importedToMobileAt,
+    syncUserId: null,
+    syncWorksiteId: null,
+    syncVersion: normalizedPackage.desktopDataVersion,
     selectedForDisplay:
       normalizedPackage.isCurrentWeek ||
       replacingExisting?.selectedForDisplay === true ||

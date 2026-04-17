@@ -1,12 +1,21 @@
 import SectionCard from '../../components/SectionCard';
 import type { VersionInfo } from '../../contracts/mobileContracts';
+import type { CaptureOptionLists } from '../../config/siteCaptureOptions';
+import LocalOptionEditor from './LocalOptionEditor';
 
 interface UtilitiesPanelProps {
   versionInfo: VersionInfo;
   captureCount: number;
   snapshotCount: number;
+  captureOptions: CaptureOptionLists;
+  hasCaptureOptionOverrides: boolean;
   onSeedSampleData: () => Promise<void>;
   onClearSampleData: () => Promise<void>;
+  onAddDepartmentOption: (value: string) => Promise<void>;
+  onRemoveDepartmentOption: (value: string) => Promise<void>;
+  onAddStationOption: (value: string) => Promise<void>;
+  onRemoveStationOption: (value: string) => Promise<void>;
+  onResetCaptureOptions: () => Promise<void>;
   disabled?: boolean;
 }
 
@@ -14,8 +23,15 @@ const UtilitiesPanel = ({
   versionInfo,
   captureCount,
   snapshotCount,
+  captureOptions,
+  hasCaptureOptionOverrides,
   onSeedSampleData,
   onClearSampleData,
+  onAddDepartmentOption,
+  onRemoveDepartmentOption,
+  onAddStationOption,
+  onRemoveStationOption,
+  onResetCaptureOptions,
   disabled = false,
 }: UtilitiesPanelProps) => (
   <details className="utilities-panel">
@@ -43,7 +59,7 @@ const UtilitiesPanel = ({
         <div className="utility-meta">
           <strong>Local counts</strong>
           <span>{captureCount} capture records</span>
-          <span>{snapshotCount} imported week snapshots</span>
+          <span>{snapshotCount} cached week snapshots</span>
         </div>
       </div>
 
@@ -72,6 +88,49 @@ const UtilitiesPanel = ({
         <a href="/samples/mobile-week-previous.sample.json" download>
           Sample previous week JSON
         </a>
+      </div>
+
+      <div className="option-editor-grid">
+        <div className="section-card__body-header">
+          <div>
+            <p className="section-card__body-title">Local Capture Options</p>
+            <p className="section-card__body-copy">
+              These lists only affect this browser on this device. Existing capture records are not changed.
+            </p>
+          </div>
+          {hasCaptureOptionOverrides ? (
+            <button
+              type="button"
+              className="button button--ghost"
+              onClick={() => void onResetCaptureOptions()}
+              disabled={disabled}
+            >
+              Reset to Defaults
+            </button>
+          ) : null}
+        </div>
+
+        <LocalOptionEditor
+          title="Manage Departments"
+          helperText="Add or remove the local department list used in the capture form."
+          placeholder="Add department"
+          emptyText="No department options are currently stored."
+          items={captureOptions.departments}
+          onAdd={onAddDepartmentOption}
+          onRemove={onRemoveDepartmentOption}
+          disabled={disabled}
+        />
+
+        <LocalOptionEditor
+          title="Manage Stations"
+          helperText="Add or remove the local station list used in the capture form."
+          placeholder="Add station"
+          emptyText="No station options are currently stored."
+          items={captureOptions.stations}
+          onAdd={onAddStationOption}
+          onRemove={onRemoveStationOption}
+          disabled={disabled}
+        />
       </div>
     </SectionCard>
   </details>

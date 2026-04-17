@@ -166,7 +166,16 @@ export const validateMobileEncounterCapture = (
     isNullableString(value.followUpSuggestedDate) &&
     isNullableString(value.linkedPriorEncounterId) &&
     isString(value.createdOnDeviceAt) &&
-    isString(value.updatedOnDeviceAt);
+    isString(value.updatedOnDeviceAt) &&
+    isOneOf(
+      value.syncStatus,
+      ['local_only', 'uploaded', 'imported_to_desktop', 'resolved', 'sync_error'] as const,
+    ) &&
+    isNullableString(value.syncError) &&
+    isNullableString(value.syncRecordId) &&
+    isNullableString(value.syncUpdatedAt) &&
+    (value.importResolution === null ||
+      isOneOf(value.importResolution, ['pending_review', 'accepted', 'converted', 'rejected'] as const));
 
   return valid
     ? { ok: true, value: value as unknown as MobileEncounterCapture }

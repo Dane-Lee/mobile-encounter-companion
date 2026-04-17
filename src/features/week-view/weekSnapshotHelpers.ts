@@ -15,4 +15,24 @@ export const getWeekSelectorLabel = (snapshot: StoredMobileWeekSnapshot) => {
 };
 
 export const getSnapshotMetaLabel = (snapshot: StoredMobileWeekSnapshot) =>
-  `Imported ${toLocalDateTimeLabel(snapshot.importedToMobileAt)} - ${snapshot.package.timezone}`;
+  `${snapshot.syncOrigin === 'backend' ? 'Synced' : 'Imported'} ${toLocalDateTimeLabel(
+    snapshot.importedToMobileAt,
+  )}`;
+
+export const getSnapshotSyncLabel = (snapshot: StoredMobileWeekSnapshot) => {
+  if (snapshot.syncOrigin === 'manual') {
+    return 'Manual import';
+  }
+
+  switch (snapshot.syncStatus) {
+    case 'published':
+      return 'Published';
+    case 'replaced':
+      return 'Replaced';
+    case 'sync_error':
+      return 'Sync error';
+    case 'not_published':
+    default:
+      return 'Backend copy';
+  }
+};

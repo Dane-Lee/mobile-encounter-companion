@@ -10,6 +10,7 @@ import {
   createCaptureExportFileName,
   createCaptureRecord,
 } from './captureRecordFactory';
+import { withCaptureSyncDefaults } from '../../sync/syncMappers';
 import {
   listMobileEncounterCaptures,
   saveMobileEncounterCapture,
@@ -26,14 +27,18 @@ export const sortCaptureRecordsForDisplay = (captures: MobileEncounterCapture[])
 
 const normalizeStoredCaptureRecord = (capture: MobileEncounterCapture) => {
   const normalizedEncounterType = normalizeEncounterType(capture.encounterType);
+  const captureWithSyncDefaults = withCaptureSyncDefaults(capture);
 
-  if (!normalizedEncounterType || normalizedEncounterType === capture.encounterType) {
+  if (
+    (!normalizedEncounterType || normalizedEncounterType === capture.encounterType) &&
+    captureWithSyncDefaults === capture
+  ) {
     return capture;
   }
 
   return {
-    ...capture,
-    encounterType: normalizedEncounterType,
+    ...captureWithSyncDefaults,
+    encounterType: normalizedEncounterType ?? capture.encounterType,
   };
 };
 

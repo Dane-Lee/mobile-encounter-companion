@@ -5,16 +5,22 @@ import {
   ENCOUNTER_TYPE_OPTIONS,
   type EncounterType,
 } from '../../contracts/encounterTypes';
+import type { CaptureOptionLists } from '../../config/siteCaptureOptions';
 import SectionCard from '../../components/SectionCard';
 import { toLocalDateTimeLabel } from '../../lib/dateTime';
+import { hasTagValue, parseTagsText, toggleTagInText } from '../../lib/tags';
 
 interface CaptureFormProps {
+  captureOptions: CaptureOptionLists;
+  prefill?: (Partial<CaptureFormValues> & { requestId: number }) | null;
   onSave: (values: CaptureFormValues, saveMode: 'draft' | 'ready') => Promise<void>;
   disabled?: boolean;
 }
 
 const initialValues: CaptureFormValues = {
   employeeDisplayName: '',
+  department: '',
+  station: '',
   encounterType: ENCOUNTER_TYPE_OPTIONS[0],
   summaryShort: '',
   tagsText: '',
@@ -22,7 +28,17 @@ const initialValues: CaptureFormValues = {
   followUpSuggestedDate: '',
 };
 
-const CaptureForm = ({ onSave, disabled = false }: CaptureFormProps) => {
+const STRUCTURED_PRIORITIZATION_TAGS = ['uncertain-pain', 'uncertain-mobility'] as const;
+
+const getOptionsWithCurrentValue = (options: string[], currentValue: string) => {
+  if (!currentValue || options.includes(currentValue)) {
+    return options;
+  }
+
+  return [currentValue, ...options];
+};
+
+const CaptureForm = ({ captureOptions, prefill, onSave, disabled = false }: CaptureFormProps) => {
   const [values, setValues] = useState<CaptureFormValues>(initialValues);
   const [isFollowUpInfoOpen, setIsFollowUpInfoOpen] = useState(false);
   const [timestampLabel, setTimestampLabel] = useState(
@@ -37,6 +53,18 @@ const CaptureForm = ({ onSave, disabled = false }: CaptureFormProps) => {
     return () => window.clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    if (!prefill) {
+      return;
+    }
+
+    setValues({
+      ...initialValues,
+      ...prefill,
+      encounterType: prefill.encounterType ?? initialValues.encounterType,
+    });
+  }, [prefill?.requestId]);
+
   const updateValue = <K extends keyof CaptureFormValues>(field: K, value: CaptureFormValues[K]) => {
     setValues((current) => ({ ...current, [field]: value }));
   };
@@ -46,7 +74,17 @@ const CaptureForm = ({ onSave, disabled = false }: CaptureFormProps) => {
     setValues(initialValues);
   };
 
-  const canSave = Boolean(values.employeeDisplayName.trim() && values.summaryShort.trim());
+  const canSave = Boolean(
+    values.employeeDisplayName.trim() &&
+      values.department &&
+      values.station &&
+      values.summaryShort.trim(),
+  );
+  const departmentOptions = getOptionsWithCurrentValue(
+    captureOptions.departments,
+    values.department,
+  );
+  const stationOptions = getOptionsWithCurrentValue(captureOptions.stations, values.station);
 
   return (
     <SectionCard
@@ -64,6 +102,38 @@ const CaptureForm = ({ onSave, disabled = false }: CaptureFormProps) => {
             autoComplete="off"
             disabled={disabled}
           />
+        </label>
+
+        <label className="field">
+          <span>Department</span>
+          <select
+            value={values.department}
+            onChange={(event) => updateValue('department', event.target.value)}
+            disabled={disabled}
+          >
+            <option value="">Select department</option>
+            {departmentOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="field">
+          <span>Station</span>
+          <select
+            value={values.station}
+            onChange={(event) => updateValue('station', event.target.value)}
+            disabled={disabled}
+          >
+            <option value="">Select station</option>
+            {stationOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="field">
@@ -97,13 +167,33 @@ const CaptureForm = ({ onSave, disabled = false }: CaptureFormProps) => {
 
         <label className="field">
           <span>Tags</span>
+          <div className="prioritization-tag-toggle-row">
+            {STRUCTURED_PRIORITIZATION_TAGS.map((tag) => {
+              const tagIsActive = hasTagValue(parseTagsText(values.tagsText), tag);
+
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  className={`tag-chip tag-chip--interactive${tagIsActive ? ' is-active' : ''}`}
+                  onClick={() => updateValue('tagsText', toggleTagInText(values.tagsText, tag))}
+                  disabled={disabled}
+                >
+                  {tag}
+                </button>
+              );
+            })}
+          </div>
           <input
             value={values.tagsText}
             onChange={(event) => updateValue('tagsText', event.target.value)}
-            placeholder="mobility, wellness, follow-up"
+            placeholder="mobility, wellness, uncertain-pain"
             autoComplete="off"
             disabled={disabled}
           />
+          <small className="helper-copy">
+            Use the exact structured tags <code>uncertain-pain</code> and <code>uncertain-mobility</code> when those temporary prioritization markers apply.
+          </small>
         </label>
 
         <div className="toggle-field">

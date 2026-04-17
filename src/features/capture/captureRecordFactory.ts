@@ -35,8 +35,8 @@ export const createCaptureRecord = (
     employeeDisplayName: values.employeeDisplayName.trim(),
     employeeId: null,
     employeeMatchConfidence: 'unknown',
-    department: null,
-    station: null,
+    department: values.department.trim(),
+    station: values.station.trim(),
     encounterType: values.encounterType,
     encounterSubtype: null,
     encounterDate: toLocalDateString(now),
@@ -57,6 +57,11 @@ export const createCaptureRecord = (
     linkedPriorEncounterId: null,
     createdOnDeviceAt: nowIso,
     updatedOnDeviceAt: nowIso,
+    syncStatus: 'local_only',
+    syncError: null,
+    syncRecordId: null,
+    syncUpdatedAt: null,
+    importResolution: null,
   };
 };
 

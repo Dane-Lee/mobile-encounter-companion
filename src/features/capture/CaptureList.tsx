@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import StatusPill from '../../components/StatusPill';
 import type { MobileEncounterCapture } from '../../contracts/mobileContracts';
 import { toLocalDateTimeLabel } from '../../lib/dateTime';
@@ -7,6 +7,9 @@ interface CaptureListProps {
   captures: MobileEncounterCapture[];
   onMarkReady: (captureId: string) => Promise<void>;
   onExportSelected: (captureIds: string[]) => Promise<void>;
+  onUploadSelected: (captureIds: string[]) => Promise<void>;
+  syncConfigured: boolean;
+  syncConfigErrors: string[];
   disabled?: boolean;
 }
 
@@ -40,10 +43,32 @@ const labelByStatus: Record<MobileEncounterCapture['captureStatus'], string> = {
   archived: 'Archived',
 };
 
+const syncToneByStatus: Record<
+  MobileEncounterCapture['syncStatus'],
+  'draft' | 'ready' | 'exported' | 'overdue' | 'neutral'
+> = {
+  local_only: 'draft',
+  uploaded: 'exported',
+  imported_to_desktop: 'ready',
+  resolved: 'ready',
+  sync_error: 'overdue',
+};
+
+const syncLabelByStatus: Record<MobileEncounterCapture['syncStatus'], string> = {
+  local_only: 'Local Only',
+  uploaded: 'Uploaded',
+  imported_to_desktop: 'Desktop Accepted',
+  resolved: 'Resolved',
+  sync_error: 'Sync Error',
+};
+
 const CaptureList = ({
   captures,
   onMarkReady,
   onExportSelected,
+  onUploadSelected,
+  syncConfigured,
+  syncConfigErrors,
   disabled = false,
 }: CaptureListProps) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -73,13 +98,22 @@ const CaptureList = ({
     }))
     .filter((group) => group.items.length > 0);
 
+  const syncSummary = useMemo(() => {
+    const localOnlyCount = captures.filter((capture) => capture.syncStatus === 'local_only').length;
+    const uploadedCount = captures.filter((capture) => capture.syncStatus === 'uploaded').length;
+    const errorCount = captures.filter((capture) => capture.syncStatus === 'sync_error').length;
+
+    return { localOnlyCount, uploadedCount, errorCount };
+  }, [captures]);
+
   return (
     <div className="capture-list-panel">
       <div className="section-card__body-header">
         <div>
           <p className="section-card__body-title">Saved On This Device</p>
           <p className="section-card__body-copy">
-            Mobile captures stay local until you export a versioned JSON package.
+            Mobile captures stay local. Use JSON export as the main handoff path. Backend upload is
+            optional when configured.
           </p>
         </div>
         <div className="section-card__action-stack">
@@ -89,27 +123,52 @@ const CaptureList = ({
             disabled={disabled || selectedIds.length === 0}
             onClick={() => void onExportSelected(selectedIds)}
           >
-            Export {selectedIds.length || ''} Selected
+            Download JSON
           </button>
+          {syncConfigured ? (
+            <button
+              type="button"
+              className="button button--secondary"
+              disabled={disabled || selectedIds.length === 0}
+              onClick={() => void onUploadSelected(selectedIds)}
+            >
+              Upload Selected
+            </button>
+          ) : null}
           <small className="helper-copy helper-copy--action">
-            Export one JSON package for later desktop import. Drafts are not included.
+            {syncConfigured
+              ? 'JSON export remains local-only. Upload is available as an optional backend path.'
+              : 'Backend sync not configured. Local save and JSON export remain fully available.'}
           </small>
         </div>
       </div>
 
+      {!syncConfigured ? (
+        <div className="sync-status-note">
+          <strong>Backend sync not configured</strong>
+          <span>Local save, local export, and manual week import continue to work normally.</span>
+        </div>
+      ) : null}
+
+      <div className="sync-summary-row">
+        <span className="sync-summary-pill">{syncSummary.localOnlyCount} local only</span>
+        <span className="sync-summary-pill">{syncSummary.uploadedCount} uploaded</span>
+        <span className="sync-summary-pill">{syncSummary.errorCount} sync errors</span>
+      </div>
+
       <p className="helper-copy">
-        Select ready items below, then export them as one package. Saved captures stay local until
-        you do that export.
+        Select ready items below, then download one local export package. If backend sync is set up,
+        you can also upload ready records for later desktop review.
       </p>
 
       {captures.length === 0 ? (
         <div className="empty-state empty-state--guided">
           <p>No captures saved yet.</p>
-          <small>Use Capture Mode for quick floor notes while you are away from the desktop app.</small>
+          <small>Use Capture Mode for quick floor notes. The local-first flow works even without backend sync.</small>
           <div className="empty-state__steps">
             <span>1. Fill out the encounter form above.</span>
             <span>2. Save it as a draft or ready record.</span>
-            <span>3. Export ready items later for desktop import.</span>
+            <span>3. Export ready captures as JSON. Upload stays optional when sync is configured.</span>
           </div>
         </div>
       ) : (
@@ -147,6 +206,10 @@ const CaptureList = ({
                             label={labelByStatus[capture.captureStatus]}
                             tone={toneByStatus[capture.captureStatus]}
                           />
+                          <StatusPill
+                            label={syncLabelByStatus[capture.syncStatus]}
+                            tone={syncToneByStatus[capture.syncStatus]}
+                          />
                         </div>
                         {capture.captureStatus === 'draft' ? (
                           <button
@@ -164,6 +227,9 @@ const CaptureList = ({
                       <p>{capture.summaryShort}</p>
 
                       <div className="capture-item__meta">
+                        {capture.department && capture.station ? (
+                          <span>{`${capture.department} | ${capture.station}`}</span>
+                        ) : null}
                         <span>{capture.encounterType}</span>
                         <span>{toLocalDateTimeLabel(capture.updatedOnDeviceAt)}</span>
                       </div>
@@ -183,6 +249,17 @@ const CaptureList = ({
                           Follow-up suggested {capture.followUpSuggestedDate ?? 'date not set'}
                         </small>
                       ) : null}
+
+                      <div className="capture-item__sync-meta">
+                        <small>
+                          {capture.syncUpdatedAt
+                            ? `Sync updated ${toLocalDateTimeLabel(capture.syncUpdatedAt)}`
+                            : 'No backend sync activity yet'}
+                        </small>
+                        {capture.syncError ? (
+                          <small className="capture-item__sync-error">{capture.syncError}</small>
+                        ) : null}
+                      </div>
                     </article>
                   );
                 })}

@@ -24,6 +24,19 @@ export type TransferStatus =
 export type EmployeeMatchConfidence = 'exact' | 'likely' | 'manual' | 'unknown';
 export type NoteType = 'typed' | 'voice_to_text' | 'voice_audio' | 'mixed';
 export type FollowUpPriority = 'low' | 'normal' | 'high' | null;
+export type MobileCaptureSyncStatus =
+  | 'local_only'
+  | 'uploaded'
+  | 'imported_to_desktop'
+  | 'resolved'
+  | 'sync_error';
+export type WeeklySnapshotSyncStatus =
+  | 'not_published'
+  | 'published'
+  | 'replaced'
+  | 'sync_error';
+export type DesktopImportResolution = 'pending_review' | 'accepted' | 'converted' | 'rejected' | null;
+export type SyncOrigin = 'manual' | 'backend';
 // Tracks local package lineage on the device. This is separate from package.isCurrentWeek,
 // which describes the calendar week represented by the imported desktop snapshot.
 export type SnapshotStatus = 'current' | 'superseded' | 'archived';
@@ -65,6 +78,11 @@ export interface MobileEncounterCapture {
   linkedPriorEncounterId: string | null;
   createdOnDeviceAt: string;
   updatedOnDeviceAt: string;
+  syncStatus: MobileCaptureSyncStatus;
+  syncError: string | null;
+  syncRecordId: string | null;
+  syncUpdatedAt: string | null;
+  importResolution: DesktopImportResolution;
 }
 
 export interface MobileCaptureExportPackage {
@@ -148,6 +166,14 @@ export interface StoredMobileWeekSnapshot {
   localWeekSnapshotId: string;
   importedToMobileAt: string;
   snapshotStatus: SnapshotStatus;
+  syncOrigin: SyncOrigin;
+  syncStatus: WeeklySnapshotSyncStatus;
+  syncError: string | null;
+  syncRecordId: string | null;
+  syncUpdatedAt: string | null;
+  syncUserId: string | null;
+  syncWorksiteId: string | null;
+  syncVersion: string | null;
   // selectedForDisplay controls which imported week the user is currently viewing.
   selectedForDisplay: boolean;
   package: MobileWeekSnapshotPackage;
@@ -155,6 +181,8 @@ export interface StoredMobileWeekSnapshot {
 
 export interface CaptureFormValues {
   employeeDisplayName: string;
+  department: string;
+  station: string;
   encounterType: EncounterType;
   summaryShort: string;
   tagsText: string;

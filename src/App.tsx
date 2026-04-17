@@ -1,30 +1,44 @@
 import { useState } from 'react';
-import ModeSwitcher from './components/ModeSwitcher';
+import ModeSwitcher, { type AppMode } from './components/ModeSwitcher';
 import { PACKAGE_VERSION_INFO } from './contracts/mobileContracts';
+import type { CaptureFormValues } from './contracts/mobileContracts';
 import CaptureMode from './features/capture/CaptureMode';
 import GuideModal from './features/guide/GuideModal';
+import PrioritizationMode from './features/prioritization/PrioritizationMode';
 import UtilitiesPanel from './features/utilities/UtilitiesPanel';
 import WeekViewMode from './features/week-view/WeekViewMode';
 import { useCompanionData } from './app/useCompanionData';
-
-type AppMode = 'capture' | 'weekView';
+import type { CapturePrefillRequest } from './features/prioritization/types';
 
 const App = () => {
   const [mode, setMode] = useState<AppMode>('capture');
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [capturePrefill, setCapturePrefill] = useState<
+    (Partial<CaptureFormValues> & { requestId: number }) | null
+  >(null);
   const {
     captures,
     snapshots,
     activeSnapshot,
+    captureOptions,
+    hasCaptureOptionOverrides,
     notice,
     isBusy,
+    syncStatus,
     handleSaveCapture,
     handleMarkReady,
     handleExportSelected,
+    handleUploadSelected,
     handleImportWeekPackage,
     handleSelectWeek,
+    handleRefreshWeeklySnapshots,
     handleSeedSampleData,
     handleClearSampleData,
+    handleAddDepartmentOption,
+    handleRemoveDepartmentOption,
+    handleAddStationOption,
+    handleRemoveStationOption,
+    handleResetCaptureOptions,
   } = useCompanionData();
 
   return (
@@ -65,18 +79,45 @@ const App = () => {
         {mode === 'capture' ? (
           <CaptureMode
             captures={captures}
+            captureOptions={captureOptions}
+            prefill={capturePrefill}
             onSave={handleSaveCapture}
             onMarkReady={handleMarkReady}
             onExportSelected={handleExportSelected}
+            onUploadSelected={handleUploadSelected}
+            syncConfigured={syncStatus.isConfigured}
+            syncConfigErrors={syncStatus.configErrors}
             disabled={isBusy}
           />
-        ) : (
+        ) : mode === 'weekView' ? (
           <WeekViewMode
             snapshots={snapshots}
             activeSnapshot={activeSnapshot}
             onImportPackage={handleImportWeekPackage}
             onSelectWeek={handleSelectWeek}
+            onRefreshSnapshots={handleRefreshWeeklySnapshots}
+            syncConfigured={syncStatus.isConfigured}
+            syncConfigErrors={syncStatus.configErrors}
             disabled={isBusy}
+          />
+        ) : (
+          <PrioritizationMode
+            captures={captures}
+            captureOptions={captureOptions}
+            syncConfig={syncStatus.config}
+            onOpenCapture={(prefill: CapturePrefillRequest) => {
+              setCapturePrefill({
+                requestId: Date.now(),
+                employeeDisplayName: prefill.employeeDisplayName,
+                station: prefill.station,
+                encounterType: prefill.encounterType ?? undefined,
+                summaryShort: prefill.summaryShort,
+                tagsText: prefill.tagsText,
+                followUpNeeded: prefill.followUpNeeded,
+                followUpSuggestedDate: prefill.followUpSuggestedDate,
+              });
+              setMode('capture');
+            }}
           />
         )}
       </main>
@@ -85,12 +126,23 @@ const App = () => {
         versionInfo={PACKAGE_VERSION_INFO}
         captureCount={captures.length}
         snapshotCount={snapshots.length}
+        captureOptions={captureOptions}
+        hasCaptureOptionOverrides={hasCaptureOptionOverrides}
         onSeedSampleData={handleSeedSampleData}
         onClearSampleData={handleClearSampleData}
+        onAddDepartmentOption={handleAddDepartmentOption}
+        onRemoveDepartmentOption={handleRemoveDepartmentOption}
+        onAddStationOption={handleAddStationOption}
+        onRemoveStationOption={handleRemoveStationOption}
+        onResetCaptureOptions={handleResetCaptureOptions}
         disabled={isBusy}
       />
 
-      <GuideModal open={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+      <GuideModal
+        open={isGuideOpen}
+        syncConfigured={syncStatus.isConfigured}
+        onClose={() => setIsGuideOpen(false)}
+      />
     </div>
   );
 };
