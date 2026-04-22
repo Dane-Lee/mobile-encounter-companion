@@ -1,11 +1,17 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type {
   MobileCaptureSyncStatus,
   MobileEncounterCapture,
   StoredMobileWeekSnapshot,
   WeeklySnapshotSyncStatus,
 } from '../contracts/mobileContracts';
-import { getSyncConfig, getSyncConfigErrors, isSyncConfigured } from './syncConfig';
+import {
+  getSyncConfig,
+  getSyncConfigErrors,
+  isSyncConfigured,
+  SYNC_SETTINGS_CHANGED_EVENT,
+  type SyncConfig,
+} from './syncConfig';
 
 interface CountByStatus<T extends string> {
   counts: Record<T, number>;
@@ -33,7 +39,20 @@ export const useMobileSyncStatus = (
   captures: MobileEncounterCapture[],
   snapshots: StoredMobileWeekSnapshot[],
 ) => {
-  const config = useMemo(() => getSyncConfig(), []);
+  const [config, setConfig] = useState<SyncConfig>(() => getSyncConfig());
+
+  useEffect(() => {
+    const refreshConfig = () => setConfig(getSyncConfig());
+
+    window.addEventListener(SYNC_SETTINGS_CHANGED_EVENT, refreshConfig);
+    window.addEventListener('storage', refreshConfig);
+
+    return () => {
+      window.removeEventListener(SYNC_SETTINGS_CHANGED_EVENT, refreshConfig);
+      window.removeEventListener('storage', refreshConfig);
+    };
+  }, []);
+
   const configErrors = useMemo(() => getSyncConfigErrors(config), [config]);
 
   const captureSummary = useMemo<CaptureSyncSummary>(() => {

@@ -6,6 +6,7 @@ import {
   type StoredMobileWeekSnapshot,
 } from '../contracts/mobileContracts';
 import { normalizeEncounterType, type EncounterType } from '../contracts/encounterTypes';
+import { normalizeDailyPrioritizationStateRecordIds } from '../contracts/prioritizationIds';
 import type {
   DailyPrioritizationState,
   PrioritizationExecutionRecord,
@@ -66,6 +67,10 @@ const buildCaptureOptionsJson = (capture: MobileEncounterCapture) => {
 
   if (capture.department) {
     options.department = capture.department;
+  }
+
+  if (capture.location) {
+    options.location = capture.location;
   }
 
   if (capture.station) {
@@ -418,26 +423,30 @@ const mapExecutionRecordToSyncRecord = (
 export const mapDailyPrioritizationStateToSyncRecord = (
   state: DailyPrioritizationState,
   config: SyncConfig,
-): DailyPrioritizationStateSyncRecord => ({
-  id:
-    state.syncRecordId ??
-    `daily-prioritization-state-${config.userId ?? 'unknown'}-${config.worksiteId ?? 'unknown'}-${state.prioritizationDate}`,
-  user_id: config.userId ?? '',
-  worksite_id: config.worksiteId ?? '',
-  source_app: 'mobile',
-  sync_record_type: 'daily_prioritization_state',
-  prioritization_date: state.prioritizationDate,
-  roster_names: state.rosterNames,
-  item_overrides: state.itemOverrides.map((override) => ({
-    item_id: override.itemId,
-    status: override.status,
-    notes: override.notes,
-    updated_at: override.updatedAt,
-  })),
-  execution_records: state.executionRecords.map(mapExecutionRecordToSyncRecord),
-  updated_at: state.updatedAt,
-  version: config.version,
-});
+): DailyPrioritizationStateSyncRecord => {
+  const normalizedState = normalizeDailyPrioritizationStateRecordIds(state);
+
+  return {
+    id:
+      normalizedState.syncRecordId ??
+      `daily-prioritization-state-${config.userId ?? 'unknown'}-${config.worksiteId ?? 'unknown'}-${normalizedState.prioritizationDate}`,
+    user_id: config.userId ?? '',
+    worksite_id: config.worksiteId ?? '',
+    source_app: 'mobile',
+    sync_record_type: 'daily_prioritization_state',
+    prioritization_date: normalizedState.prioritizationDate,
+    roster_names: normalizedState.rosterNames,
+    item_overrides: normalizedState.itemOverrides.map((override) => ({
+      item_id: override.itemId,
+      status: override.status,
+      notes: override.notes,
+      updated_at: override.updatedAt,
+    })),
+    execution_records: normalizedState.executionRecords.map(mapExecutionRecordToSyncRecord),
+    updated_at: normalizedState.updatedAt,
+    version: config.version,
+  };
+};
 
 export const applyPrioritizationSettingsSyncRecord = (
   settings: PrioritizationSettings,
@@ -455,35 +464,36 @@ export const applyPrioritizationSettingsSyncRecord = (
 export const applyDailyPrioritizationStateSyncRecord = (
   state: DailyPrioritizationState,
   record: DailyPrioritizationStateSyncRecord,
-): DailyPrioritizationState => ({
-  ...state,
-  prioritizationDate: record.prioritization_date,
-  rosterNames: record.roster_names,
-  itemOverrides: record.item_overrides.map((override) => ({
-    itemId: override.item_id,
-    status: override.status,
-    notes: override.notes,
-    updatedAt: override.updated_at,
-  })),
-  executionRecords: record.execution_records.map((executionRecord) => ({
-    executionId: executionRecord.execution_id,
-    sourcePrioritizationItemId: executionRecord.source_prioritization_item_id,
-    employeeName: executionRecord.employee_name,
-    stationName: executionRecord.station_name,
-    checklistSectionsCompleted: executionRecord.checklist_sections_completed,
-    recommendedNextStep: executionRecord.recommended_next_step as EncounterType | null,
-    interactionOccurred: executionRecord.interaction_occurred,
-    readyToRecord: executionRecord.ready_to_record,
-    status: executionRecord.status,
-    createdAt: executionRecord.created_at,
-    updatedAt: executionRecord.updated_at,
-  })),
-  updatedAt: record.updated_at,
-  syncStatus: 'synced',
-  syncError: null,
-  syncRecordId: record.id,
-  syncUpdatedAt: record.updated_at,
-});
+): DailyPrioritizationState =>
+  normalizeDailyPrioritizationStateRecordIds({
+    ...state,
+    prioritizationDate: record.prioritization_date,
+    rosterNames: record.roster_names,
+    itemOverrides: record.item_overrides.map((override) => ({
+      itemId: override.item_id,
+      status: override.status,
+      notes: override.notes,
+      updatedAt: override.updated_at,
+    })),
+    executionRecords: record.execution_records.map((executionRecord) => ({
+      executionId: executionRecord.execution_id,
+      sourcePrioritizationItemId: executionRecord.source_prioritization_item_id,
+      employeeName: executionRecord.employee_name,
+      stationName: executionRecord.station_name,
+      checklistSectionsCompleted: executionRecord.checklist_sections_completed,
+      recommendedNextStep: executionRecord.recommended_next_step as EncounterType | null,
+      interactionOccurred: executionRecord.interaction_occurred,
+      readyToRecord: executionRecord.ready_to_record,
+      status: executionRecord.status,
+      createdAt: executionRecord.created_at,
+      updatedAt: executionRecord.updated_at,
+    })),
+    updatedAt: record.updated_at,
+    syncStatus: 'synced',
+    syncError: null,
+    syncRecordId: record.id,
+    syncUpdatedAt: record.updated_at,
+  });
 
 export const applyPrioritizationSettingsSyncError = (
   settings: PrioritizationSettings,

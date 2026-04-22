@@ -1,12 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import InfoDialog from '../../components/InfoDialog';
+import SectionCard from '../../components/SectionCard';
 import type { CaptureFormValues } from '../../contracts/mobileContracts';
 import {
   ENCOUNTER_TYPE_OPTIONS,
   type EncounterType,
 } from '../../contracts/encounterTypes';
-import type { CaptureOptionLists } from '../../config/siteCaptureOptions';
-import SectionCard from '../../components/SectionCard';
+import {
+  getDepartmentNames,
+  getFilteredLocationNames,
+  getFilteredStationNames,
+  getLocationNames,
+  getStationNames,
+  inferHierarchyFromLocation,
+  inferHierarchyFromStation,
+  type CaptureOptionLists,
+} from '../../config/siteCaptureOptions';
 import { toLocalDateTimeLabel } from '../../lib/dateTime';
 import { hasTagValue, parseTagsText, toggleTagInText } from '../../lib/tags';
 
@@ -20,6 +29,7 @@ interface CaptureFormProps {
 const initialValues: CaptureFormValues = {
   employeeDisplayName: '',
   department: '',
+  location: '',
   station: '',
   encounterType: ENCOUNTER_TYPE_OPTIONS[0],
   summaryShort: '',
@@ -36,6 +46,75 @@ const getOptionsWithCurrentValue = (options: string[], currentValue: string) => 
   }
 
   return [currentValue, ...options];
+};
+
+const hydratePrefillValues = (
+  prefill: Partial<CaptureFormValues>,
+  captureOptions: CaptureOptionLists,
+): CaptureFormValues => {
+  const nextValues: CaptureFormValues = {
+    ...initialValues,
+    ...prefill,
+    encounterType: prefill.encounterType ?? initialValues.encounterType,
+  };
+
+  if (nextValues.station && !nextValues.location) {
+    const inferredHierarchy = inferHierarchyFromStation(captureOptions, nextValues.station);
+
+    if (inferredHierarchy.location) {
+      nextValues.location = inferredHierarchy.location;
+    }
+
+    if (!nextValues.department && inferredHierarchy.department) {
+      nextValues.department = inferredHierarchy.department;
+    }
+  }
+
+  if (nextValues.location && !nextValues.department) {
+    const inferredHierarchy = inferHierarchyFromLocation(captureOptions, nextValues.location);
+
+    if (inferredHierarchy.department) {
+      nextValues.department = inferredHierarchy.department;
+    }
+  }
+
+  return nextValues;
+};
+
+const synchronizeHierarchySelections = (
+  currentValues: CaptureFormValues,
+  captureOptions: CaptureOptionLists,
+) => {
+  const nextValues = { ...currentValues };
+  const availableLocationNames = getLocationNames(captureOptions);
+  const availableStationNames = getStationNames(captureOptions);
+  const filteredLocations = nextValues.department
+    ? getFilteredLocationNames(captureOptions, nextValues.department)
+    : { names: availableLocationNames, usingScopedOptions: false };
+
+  if (
+    nextValues.location &&
+    (!availableLocationNames.includes(nextValues.location) ||
+      (filteredLocations.usingScopedOptions &&
+        !filteredLocations.names.includes(nextValues.location)))
+  ) {
+    nextValues.location = '';
+  }
+
+  const filteredStations = nextValues.location
+    ? getFilteredStationNames(captureOptions, nextValues.location)
+    : { names: availableStationNames, usingScopedOptions: false };
+
+  if (
+    nextValues.station &&
+    (!availableStationNames.includes(nextValues.station) ||
+      (filteredStations.usingScopedOptions &&
+        !filteredStations.names.includes(nextValues.station)))
+  ) {
+    nextValues.station = '';
+  }
+
+  return nextValues;
 };
 
 const CaptureForm = ({ captureOptions, prefill, onSave, disabled = false }: CaptureFormProps) => {
@@ -58,12 +137,18 @@ const CaptureForm = ({ captureOptions, prefill, onSave, disabled = false }: Capt
       return;
     }
 
-    setValues({
-      ...initialValues,
-      ...prefill,
-      encounterType: prefill.encounterType ?? initialValues.encounterType,
+    setValues(hydratePrefillValues(prefill, captureOptions));
+  }, [captureOptions, prefill?.requestId, prefill]);
+
+  useEffect(() => {
+    setValues((currentValues) => {
+      const nextValues = synchronizeHierarchySelections(currentValues, captureOptions);
+
+      return JSON.stringify(nextValues) === JSON.stringify(currentValues)
+        ? currentValues
+        : nextValues;
     });
-  }, [prefill?.requestId]);
+  }, [captureOptions, values.department, values.location]);
 
   const updateValue = <K extends keyof CaptureFormValues>(field: K, value: CaptureFormValues[K]) => {
     setValues((current) => ({ ...current, [field]: value }));
@@ -75,16 +160,33 @@ const CaptureForm = ({ captureOptions, prefill, onSave, disabled = false }: Capt
   };
 
   const canSave = Boolean(
-    values.employeeDisplayName.trim() &&
-      values.department &&
-      values.station &&
-      values.summaryShort.trim(),
+    values.employeeDisplayName.trim() && values.department && values.location,
   );
-  const departmentOptions = getOptionsWithCurrentValue(
-    captureOptions.departments,
-    values.department,
+
+  const departmentOptions = useMemo(
+    () => getOptionsWithCurrentValue(getDepartmentNames(captureOptions), values.department),
+    [captureOptions, values.department],
   );
-  const stationOptions = getOptionsWithCurrentValue(captureOptions.stations, values.station);
+  const locationOptions = useMemo(() => {
+    const filteredLocations = values.department
+      ? getFilteredLocationNames(captureOptions, values.department)
+      : {
+          names: getLocationNames(captureOptions),
+          usingScopedOptions: false,
+        };
+
+    return getOptionsWithCurrentValue(filteredLocations.names, values.location);
+  }, [captureOptions, values.department, values.location]);
+  const stationOptions = useMemo(() => {
+    const filteredStations = values.location
+      ? getFilteredStationNames(captureOptions, values.location)
+      : {
+          names: getStationNames(captureOptions),
+          usingScopedOptions: false,
+        };
+
+    return getOptionsWithCurrentValue(filteredStations.names, values.station);
+  }, [captureOptions, values.location, values.station]);
 
   return (
     <SectionCard
@@ -121,13 +223,29 @@ const CaptureForm = ({ captureOptions, prefill, onSave, disabled = false }: Capt
         </label>
 
         <label className="field">
+          <span>Location</span>
+          <select
+            value={values.location}
+            onChange={(event) => updateValue('location', event.target.value)}
+            disabled={disabled}
+          >
+            <option value="">Select location</option>
+            {locationOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="field">
           <span>Station</span>
           <select
             value={values.station}
             onChange={(event) => updateValue('station', event.target.value)}
             disabled={disabled}
           >
-            <option value="">Select station</option>
+            <option value="">Select station (optional)</option>
             {stationOptions.map((option) => (
               <option key={option} value={option}>
                 {option}
@@ -192,7 +310,8 @@ const CaptureForm = ({ captureOptions, prefill, onSave, disabled = false }: Capt
             disabled={disabled}
           />
           <small className="helper-copy">
-            Use the exact structured tags <code>uncertain-pain</code> and <code>uncertain-mobility</code> when those temporary prioritization markers apply.
+            Use the exact structured tags <code>uncertain-pain</code> and{' '}
+            <code>uncertain-mobility</code> when those temporary prioritization markers apply.
           </small>
         </label>
 

@@ -28,16 +28,20 @@ export const sortCaptureRecordsForDisplay = (captures: MobileEncounterCapture[])
 const normalizeStoredCaptureRecord = (capture: MobileEncounterCapture) => {
   const normalizedEncounterType = normalizeEncounterType(capture.encounterType);
   const captureWithSyncDefaults = withCaptureSyncDefaults(capture);
+  const nextLocation =
+    'location' in captureWithSyncDefaults ? captureWithSyncDefaults.location ?? null : null;
 
   if (
     (!normalizedEncounterType || normalizedEncounterType === capture.encounterType) &&
-    captureWithSyncDefaults === capture
+    captureWithSyncDefaults === capture &&
+    nextLocation === capture.location
   ) {
     return capture;
   }
 
   return {
     ...captureWithSyncDefaults,
+    location: nextLocation,
     encounterType: normalizedEncounterType ?? capture.encounterType,
   };
 };

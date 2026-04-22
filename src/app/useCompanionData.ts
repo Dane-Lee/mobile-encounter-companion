@@ -8,11 +8,17 @@ import { downloadJsonFile } from '../lib/download';
 import { seedSampleData } from '../mocks/sampleSeed';
 import { clearSampleCaptures } from '../storage/captureStore';
 import {
-  addCaptureOptionOverride,
+  addDepartmentOptionOverride,
+  addLocationOptionOverride,
+  addStationOptionOverride,
   clearCaptureOptionOverrides,
   getEffectiveCaptureOptionLists,
   hasStoredCaptureOptionOverrides,
-  removeCaptureOptionOverride,
+  removeDepartmentOptionOverride,
+  removeLocationOptionOverride,
+  removeStationOptionOverride,
+  updateLocationOptionDepartment,
+  updateStationOptionLocation,
 } from '../storage/captureOptionStore';
 import { clearSampleWeekSnapshots } from '../storage/weekSnapshotStore';
 import {
@@ -31,6 +37,7 @@ import {
 } from '../features/week-view/weekSnapshotService';
 import { refreshWeeklySnapshotsFromSync } from '../features/week-view/weeklySnapshotSyncService';
 import { useMobileSyncStatus } from '../sync/useMobileSyncStatus';
+import { FULL_SYNC_COMPLETED_EVENT } from '../sync/sync';
 import type { CaptureOptionLists } from '../config/siteCaptureOptions';
 
 type Notice = { tone: 'success' | 'error' | 'info'; message: string } | null;
@@ -66,6 +73,18 @@ export const useCompanionData = () => {
   useEffect(() => {
     void refreshData();
     refreshCaptureOptions();
+  }, []);
+
+  useEffect(() => {
+    const handleFullSyncCompleted = () => {
+      void refreshData();
+    };
+
+    window.addEventListener(FULL_SYNC_COMPLETED_EVENT, handleFullSyncCompleted);
+
+    return () => {
+      window.removeEventListener(FULL_SYNC_COMPLETED_EVENT, handleFullSyncCompleted);
+    };
   }, []);
 
   useEffect(() => {
@@ -221,28 +240,62 @@ export const useCompanionData = () => {
 
   const handleAddDepartmentOption = async (value: string) => {
     await runAction(async () => {
-      addCaptureOptionOverride('departments', value);
+      addDepartmentOptionOverride(value);
       refreshCaptureOptions();
     }, 'Department option added locally.');
   };
 
   const handleRemoveDepartmentOption = async (value: string) => {
     await runAction(async () => {
-      removeCaptureOptionOverride('departments', value);
+      removeDepartmentOptionOverride(value);
       refreshCaptureOptions();
     }, 'Department option removed locally.');
   };
 
-  const handleAddStationOption = async (value: string) => {
+  const handleAddLocationOption = async (name: string, department: string | null) => {
     await runAction(async () => {
-      addCaptureOptionOverride('stations', value);
+      addLocationOptionOverride(name, department);
+      refreshCaptureOptions();
+    }, 'Location option added locally.');
+  };
+
+  const handleUpdateLocationOptionDepartment = async (
+    name: string,
+    department: string | null,
+  ) => {
+    await runAction(async () => {
+      updateLocationOptionDepartment(name, department);
+      refreshCaptureOptions();
+    }, 'Location assignment updated locally.');
+  };
+
+  const handleRemoveLocationOption = async (value: string) => {
+    await runAction(async () => {
+      removeLocationOptionOverride(value);
+      refreshCaptureOptions();
+    }, 'Location option removed locally.');
+  };
+
+  const handleAddStationOption = async (name: string, location: string | null) => {
+    await runAction(async () => {
+      addStationOptionOverride(name, location);
       refreshCaptureOptions();
     }, 'Station option added locally.');
   };
 
+  const handleUpdateStationOptionLocation = async (
+    name: string,
+    location: string | null,
+  ) => {
+    await runAction(async () => {
+      updateStationOptionLocation(name, location);
+      refreshCaptureOptions();
+    }, 'Station assignment updated locally.');
+  };
+
   const handleRemoveStationOption = async (value: string) => {
     await runAction(async () => {
-      removeCaptureOptionOverride('stations', value);
+      removeStationOptionOverride(value);
       refreshCaptureOptions();
     }, 'Station option removed locally.');
   };
@@ -251,7 +304,7 @@ export const useCompanionData = () => {
     await runAction(async () => {
       clearCaptureOptionOverrides();
       refreshCaptureOptions();
-    }, 'Department and station options reset to defaults.');
+    }, 'Department, location, and station options reset to defaults.');
   };
 
   return {
@@ -274,7 +327,11 @@ export const useCompanionData = () => {
     handleClearSampleData,
     handleAddDepartmentOption,
     handleRemoveDepartmentOption,
+    handleAddLocationOption,
+    handleUpdateLocationOptionDepartment,
+    handleRemoveLocationOption,
     handleAddStationOption,
+    handleUpdateStationOptionLocation,
     handleRemoveStationOption,
     handleResetCaptureOptions,
   };

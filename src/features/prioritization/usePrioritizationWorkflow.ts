@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CaptureOptionLists } from '../../config/siteCaptureOptions';
 import type { MobileEncounterCapture } from '../../contracts/mobileContracts';
+import { normalizeDailyPrioritizationStateRecordIds } from '../../contracts/prioritizationIds';
 import { getPrioritizationSettingsRecord, savePrioritizationSettingsRecord } from '../../storage/prioritizationSettingsStore';
 import { getDailyPrioritizationStateRecord, saveDailyPrioritizationStateRecord } from '../../storage/dailyPrioritizationStateStore';
 import { type SyncConfig, getSyncConfigErrors } from '../../sync/syncConfig';
+import { FULL_SYNC_COMPLETED_EVENT } from '../../sync/sync';
 import { toLocalDateString } from '../../lib/dateTime';
 import { createId } from '../../lib/id';
 import { groupPrioritizationItemsByBucket, getExecutionRecordForItem, getPrototypeSummary } from './prioritizationHelpers';
@@ -117,9 +119,10 @@ export const usePrioritizationWorkflow = ({
     nextState: typeof dailyState,
     successMessage?: string,
   ) => {
-    setDailyState(nextState);
-    await saveDailyPrioritizationStateRecord(nextState);
-    const syncedState = await syncDailyPrioritizationState(syncConfig, nextState);
+    const normalizedState = normalizeDailyPrioritizationStateRecordIds(nextState);
+    setDailyState(normalizedState);
+    await saveDailyPrioritizationStateRecord(normalizedState);
+    const syncedState = await syncDailyPrioritizationState(syncConfig, normalizedState);
     await saveDailyPrioritizationStateRecord(syncedState);
     setDailyState(syncedState);
     if (successMessage) {
@@ -138,7 +141,9 @@ export const usePrioritizationWorkflow = ({
       ]);
 
       const localSettings = storedSettings ?? createDefaultPrioritizationSettings();
-      const localDailyState = storedDailyState ?? createDailyPrioritizationState(prioritizationDate);
+      const localDailyState = normalizeDailyPrioritizationStateRecordIds(
+        storedDailyState ?? createDailyPrioritizationState(prioritizationDate),
+      );
       const syncedData = await loadPrioritizationSyncData({
         config: syncConfig,
         localSettings,
@@ -169,6 +174,18 @@ export const usePrioritizationWorkflow = ({
 
   useEffect(() => {
     void loadWorkflow();
+  }, [prioritizationDate]);
+
+  useEffect(() => {
+    const handleFullSyncCompleted = () => {
+      void loadWorkflow();
+    };
+
+    window.addEventListener(FULL_SYNC_COMPLETED_EVENT, handleFullSyncCompleted);
+
+    return () => {
+      window.removeEventListener(FULL_SYNC_COMPLETED_EVENT, handleFullSyncCompleted);
+    };
   }, [prioritizationDate]);
 
   useEffect(() => {
@@ -358,4 +375,3 @@ export const usePrioritizationWorkflow = ({
     },
   };
 };
-

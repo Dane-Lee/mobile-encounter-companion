@@ -9,9 +9,10 @@ import type {
 const STATUS_ORDER: Record<PrioritizationStatus, number> = {
   open: 0,
   in_progress: 1,
-  deferred: 2,
-  unable_to_complete: 3,
-  completed: 4,
+  urgent: 2,
+  deferred: 3,
+  unable_to_complete: 4,
+  completed: 5,
 };
 
 const getBucketOrder = (bucketId: PrioritizationItem['priorityBucket']) =>

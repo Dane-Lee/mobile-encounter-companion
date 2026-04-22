@@ -36,6 +36,7 @@ export const createCaptureRecord = (
     employeeId: null,
     employeeMatchConfidence: 'unknown',
     department: values.department.trim(),
+    location: values.location.trim(),
     station: values.station.trim(),
     encounterType: values.encounterType,
     encounterSubtype: null,

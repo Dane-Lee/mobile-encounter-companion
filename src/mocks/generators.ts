@@ -14,7 +14,10 @@ import {
   ENCOUNTER_TYPE_OPTIONS,
   type EncounterType,
 } from '../contracts/encounterTypes';
-import { DEFAULT_SITE_CAPTURE_OPTIONS } from '../config/siteCaptureOptions';
+import {
+  DEFAULT_SITE_CAPTURE_OPTIONS,
+  getStationNames,
+} from '../config/siteCaptureOptions';
 import {
   addDays,
   addWeeks,
@@ -28,7 +31,7 @@ import {
 const SAMPLE_PREFIX = 'sample';
 const employeeNames = ['Jordan Hale', 'Terry Flores', 'Mina Patel', 'DeAndre Ross', 'Alicia Kim'];
 const departments: string[] = [...DEFAULT_SITE_CAPTURE_OPTIONS.departments];
-const stations: string[] = [...DEFAULT_SITE_CAPTURE_OPTIONS.stations];
+const stations: string[] = getStationNames(DEFAULT_SITE_CAPTURE_OPTIONS);
 const encounterTypes: EncounterType[] = [
   ENCOUNTER_TYPE_OPTIONS[0],
   ENCOUNTER_TYPE_OPTIONS[1],
@@ -127,6 +130,7 @@ const createSampleCaptureRecord = (
     employeeId: null,
     employeeMatchConfidence: 'unknown',
     department: departments[index % departments.length],
+    location: null,
     station: stations[index % stations.length],
     encounterType,
     encounterSubtype: null,

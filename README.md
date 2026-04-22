@@ -116,14 +116,16 @@ The sync model is backend-mediated only. Mobile and desktop do not communicate d
 Configure the hosted mobile app with these environment variables when you want sync enabled:
 
 ```bash
-VITE_SYNC_API_BASE_URL=https://your-sync-api.example.com
+VITE_SYNC_API_BASE_URL=https://your-sync-api.example.com/api/sync
 VITE_SYNC_USER_ID=your-user-id
 VITE_SYNC_WORKSITE_ID=your-worksite-id
 VITE_SYNC_DEVICE_ID=optional-device-id
 VITE_SYNC_CONTRACT_VERSION=1.0.0
 ```
 
-Expected mobile-side endpoints:
+The mobile app appends relative sync paths to `VITE_SYNC_API_BASE_URL`, so this value should point at the sync root.
+
+Expected mobile-side endpoints beneath that base URL:
 
 - `POST /mobile_capture_entries`
 - `GET /weekly_snapshots?user_id=...&worksite_id=...`

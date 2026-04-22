@@ -13,7 +13,11 @@ interface UtilitiesPanelProps {
   onClearSampleData: () => Promise<void>;
   onAddDepartmentOption: (value: string) => Promise<void>;
   onRemoveDepartmentOption: (value: string) => Promise<void>;
-  onAddStationOption: (value: string) => Promise<void>;
+  onAddLocationOption: (name: string, department: string | null) => Promise<void>;
+  onUpdateLocationOptionDepartment: (name: string, department: string | null) => Promise<void>;
+  onRemoveLocationOption: (value: string) => Promise<void>;
+  onAddStationOption: (name: string, location: string | null) => Promise<void>;
+  onUpdateStationOptionLocation: (name: string, location: string | null) => Promise<void>;
   onRemoveStationOption: (value: string) => Promise<void>;
   onResetCaptureOptions: () => Promise<void>;
   disabled?: boolean;
@@ -29,7 +33,11 @@ const UtilitiesPanel = ({
   onClearSampleData,
   onAddDepartmentOption,
   onRemoveDepartmentOption,
+  onAddLocationOption,
+  onUpdateLocationOptionDepartment,
+  onRemoveLocationOption,
   onAddStationOption,
+  onUpdateStationOptionLocation,
   onRemoveStationOption,
   onResetCaptureOptions,
   disabled = false,
@@ -111,6 +119,7 @@ const UtilitiesPanel = ({
         </div>
 
         <LocalOptionEditor
+          mode="simple"
           title="Manage Departments"
           helperText="Add or remove the local department list used in the capture form."
           placeholder="Add department"
@@ -122,12 +131,39 @@ const UtilitiesPanel = ({
         />
 
         <LocalOptionEditor
+          mode="linked"
+          title="Manage Locations"
+          helperText="Add locations and assign each one to a department, or leave it unassigned."
+          placeholder="Add location"
+          emptyText="No location options are currently stored."
+          parentLabel="Department"
+          parentPlaceholder="Unassigned department"
+          parentOptions={captureOptions.departments}
+          items={captureOptions.locations.map((location) => ({
+            name: location.name,
+            parent: location.department,
+          }))}
+          onAdd={onAddLocationOption}
+          onUpdateParent={onUpdateLocationOptionDepartment}
+          onRemove={onRemoveLocationOption}
+          disabled={disabled}
+        />
+
+        <LocalOptionEditor
+          mode="linked"
           title="Manage Stations"
-          helperText="Add or remove the local station list used in the capture form."
+          helperText="Add stations and assign each one to a location, or leave it unassigned."
           placeholder="Add station"
           emptyText="No station options are currently stored."
-          items={captureOptions.stations}
+          parentLabel="Location"
+          parentPlaceholder="Unassigned location"
+          parentOptions={captureOptions.locations.map((location) => location.name)}
+          items={captureOptions.stations.map((station) => ({
+            name: station.name,
+            parent: station.location,
+          }))}
           onAdd={onAddStationOption}
+          onUpdateParent={onUpdateStationOptionLocation}
           onRemove={onRemoveStationOption}
           disabled={disabled}
         />
