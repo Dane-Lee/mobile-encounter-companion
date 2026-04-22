@@ -145,6 +145,7 @@ export const validateMobileEncounterCapture = (
     isNullableString(value.employeeId) &&
     isOneOf(value.employeeMatchConfidence, ['exact', 'likely', 'manual', 'unknown'] as const) &&
     isNullableString(value.department) &&
+    isNullableString(value.location) &&
     isNullableString(value.station) &&
     isEncounterType(value.encounterType) &&
     isNullableString(value.encounterSubtype) &&

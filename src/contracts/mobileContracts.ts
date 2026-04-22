@@ -57,6 +57,7 @@ export interface MobileEncounterCapture {
   employeeId: string | null;
   employeeMatchConfidence: EmployeeMatchConfidence;
   department: string | null;
+  location: string | null;
   station: string | null;
   encounterType: EncounterType;
   encounterSubtype: string | null;
@@ -182,6 +183,7 @@ export interface StoredMobileWeekSnapshot {
 export interface CaptureFormValues {
   employeeDisplayName: string;
   department: string;
+  location: string;
   station: string;
   encounterType: EncounterType;
   summaryShort: string;

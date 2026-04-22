@@ -1,3 +1,10 @@
+import {
+  getDesktopSyncSettings,
+  getDesktopSyncSettingsErrors,
+  isDesktopSyncConfigured,
+  SYNC_SETTINGS_CHANGED_EVENT,
+} from './config';
+
 export interface SyncConfig {
   apiBaseUrl: string | null;
   userId: string | null;
@@ -6,40 +13,34 @@ export interface SyncConfig {
   version: string | null;
 }
 
-const normalizeOptionalValue = (value: string | undefined) => {
-  const trimmed = value?.trim();
-  return trimmed ? trimmed : null;
+export const getSyncConfig = (): SyncConfig => {
+  const settings = getDesktopSyncSettings();
+
+  return {
+    apiBaseUrl: settings.baseUrl,
+    userId: settings.userId,
+    worksiteId: settings.worksiteId,
+    deviceId: settings.deviceId,
+    version: settings.version,
+  };
 };
 
-const normalizeBaseUrl = (value: string | undefined) => {
-  const normalized = normalizeOptionalValue(value);
-  return normalized ? normalized.replace(/\/+$/, '') : null;
-};
+export const getSyncConfigErrors = (config: SyncConfig) =>
+  getDesktopSyncSettingsErrors({
+    baseUrl: config.apiBaseUrl,
+    userId: config.userId,
+    worksiteId: config.worksiteId,
+    deviceId: config.deviceId ?? '',
+    version: config.version ?? '1.0.0',
+  });
 
-export const getSyncConfig = (): SyncConfig => ({
-  apiBaseUrl: normalizeBaseUrl(import.meta.env.VITE_SYNC_API_BASE_URL),
-  userId: normalizeOptionalValue(import.meta.env.VITE_SYNC_USER_ID),
-  worksiteId: normalizeOptionalValue(import.meta.env.VITE_SYNC_WORKSITE_ID),
-  deviceId: normalizeOptionalValue(import.meta.env.VITE_SYNC_DEVICE_ID),
-  version: normalizeOptionalValue(import.meta.env.VITE_SYNC_CONTRACT_VERSION) ?? '1.0.0',
-});
+export const isSyncConfigured = (config: SyncConfig) =>
+  isDesktopSyncConfigured({
+    baseUrl: config.apiBaseUrl,
+    userId: config.userId,
+    worksiteId: config.worksiteId,
+    deviceId: config.deviceId ?? '',
+    version: config.version ?? '1.0.0',
+  });
 
-export const getSyncConfigErrors = (config: SyncConfig) => {
-  const errors: string[] = [];
-
-  if (!config.apiBaseUrl) {
-    errors.push('Set VITE_SYNC_API_BASE_URL to enable backend sync.');
-  }
-
-  if (!config.userId) {
-    errors.push('Set VITE_SYNC_USER_ID to scope sync to one user.');
-  }
-
-  if (!config.worksiteId) {
-    errors.push('Set VITE_SYNC_WORKSITE_ID to scope sync to one worksite.');
-  }
-
-  return errors;
-};
-
-export const isSyncConfigured = (config: SyncConfig) => getSyncConfigErrors(config).length === 0;
+export { SYNC_SETTINGS_CHANGED_EVENT };

@@ -36,7 +36,11 @@ const App = () => {
     handleClearSampleData,
     handleAddDepartmentOption,
     handleRemoveDepartmentOption,
+    handleAddLocationOption,
+    handleUpdateLocationOptionDepartment,
+    handleRemoveLocationOption,
     handleAddStationOption,
+    handleUpdateStationOptionLocation,
     handleRemoveStationOption,
     handleResetCaptureOptions,
   } = useCompanionData();
@@ -132,7 +136,11 @@ const App = () => {
         onClearSampleData={handleClearSampleData}
         onAddDepartmentOption={handleAddDepartmentOption}
         onRemoveDepartmentOption={handleRemoveDepartmentOption}
+        onAddLocationOption={handleAddLocationOption}
+        onUpdateLocationOptionDepartment={handleUpdateLocationOptionDepartment}
+        onRemoveLocationOption={handleRemoveLocationOption}
         onAddStationOption={handleAddStationOption}
+        onUpdateStationOptionLocation={handleUpdateStationOptionLocation}
         onRemoveStationOption={handleRemoveStationOption}
         onResetCaptureOptions={handleResetCaptureOptions}
         disabled={isBusy}

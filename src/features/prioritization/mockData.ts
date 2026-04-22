@@ -1,8 +1,16 @@
 import type { PrioritizationItem } from './types';
+import { createPrioritizationItemId } from '../../contracts/prioritizationIds';
+
+const MOCK_PRIORITIZATION_DATE = '2026-04-14';
 
 export const createMockPrioritizationItems = (): PrioritizationItem[] => [
   {
-    id: 'pri-pa-followup-001',
+    id: createPrioritizationItemId(
+      MOCK_PRIORITIZATION_DATE,
+      'open_pa_follow_up',
+      'employee',
+      'Maria Lopez',
+    ),
     itemType: 'employee',
     priorityBucket: 'open_pa_follow_up',
     displayLabel: 'Maria Lopez - open PA follow-up',
@@ -19,7 +27,12 @@ export const createMockPrioritizationItems = (): PrioritizationItem[] => [
     notes: 'Reconnect before second break and confirm whether symptoms changed overnight.',
   },
   {
-    id: 'pri-not-encountered-001',
+    id: createPrioritizationItemId(
+      MOCK_PRIORITIZATION_DATE,
+      'worker_not_yet_encountered',
+      'employee',
+      'James Turner',
+    ),
     itemType: 'employee',
     priorityBucket: 'worker_not_yet_encountered',
     displayLabel: 'James Turner - first encounter still needed',
@@ -35,7 +48,12 @@ export const createMockPrioritizationItems = (): PrioritizationItem[] => [
     notes: null,
   },
   {
-    id: 'pri-pain-uncertain-001',
+    id: createPrioritizationItemId(
+      MOCK_PRIORITIZATION_DATE,
+      'worker_uncertain_pain_discomfort',
+      'employee',
+      'Ashley Kim',
+    ),
     itemType: 'employee',
     priorityBucket: 'worker_uncertain_pain_discomfort',
     displayLabel: 'Ashley Kim - discomfort still uncertain',
@@ -53,7 +71,12 @@ export const createMockPrioritizationItems = (): PrioritizationItem[] => [
       'Observe lift setup before deciding whether coaching or assessment is the better next step.',
   },
   {
-    id: 'pri-high-risk-001',
+    id: createPrioritizationItemId(
+      MOCK_PRIORITIZATION_DATE,
+      'high_risk_area',
+      'station',
+      'Pallet Build Station',
+    ),
     itemType: 'station',
     priorityBucket: 'high_risk_area',
     displayLabel: 'Pallet Build Station',
@@ -71,7 +94,12 @@ export const createMockPrioritizationItems = (): PrioritizationItem[] => [
       'Start with behavior scan, then confirm whether workstation height is driving the reach pattern.',
   },
   {
-    id: 'pri-mobility-uncertain-001',
+    id: createPrioritizationItemId(
+      MOCK_PRIORITIZATION_DATE,
+      'worker_uncertain_stiffness_mobility',
+      'employee',
+      'Marcus Tate',
+    ),
     itemType: 'employee',
     priorityBucket: 'worker_uncertain_stiffness_mobility',
     displayLabel: 'Marcus Tate - movement quality check',
@@ -89,7 +117,12 @@ export const createMockPrioritizationItems = (): PrioritizationItem[] => [
       'Keep recommendation-based only for now; do not auto-create an HMA path.',
   },
   {
-    id: 'pri-medium-risk-001',
+    id: createPrioritizationItemId(
+      MOCK_PRIORITIZATION_DATE,
+      'medium_risk_area',
+      'station',
+      'Receiving Dock',
+    ),
     itemType: 'station',
     priorityBucket: 'medium_risk_area',
     displayLabel: 'Receiving Dock',
@@ -106,7 +139,12 @@ export const createMockPrioritizationItems = (): PrioritizationItem[] => [
     notes: 'Wait until inbound trailer volume settles before running the scan.',
   },
   {
-    id: 'pri-low-risk-001',
+    id: createPrioritizationItemId(
+      MOCK_PRIORITIZATION_DATE,
+      'low_risk_area',
+      'station',
+      'Breakroom Restock Route',
+    ),
     itemType: 'station',
     priorityBucket: 'low_risk_area',
     displayLabel: 'Breakroom Restock Route',

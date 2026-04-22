@@ -114,14 +114,14 @@ export interface PrioritizationSettingsSyncRecord {
   worksite_id: string;
   source_app: 'mobile';
   sync_record_type: 'prioritization_settings';
-  station_risk_map: Record<string, 'high' | 'medium' | 'low'>;
+  station_risk_map: Record<string, 'high' | 'medium' | 'low' | 'none'>;
   updated_at: string;
   version: string | null;
 }
 
 export interface DailyPrioritizationItemOverrideSyncRecord {
   item_id: string;
-  status: 'open' | 'in_progress' | 'completed' | 'deferred' | 'unable_to_complete';
+  status: 'open' | 'in_progress' | 'completed' | 'deferred' | 'unable_to_complete' | 'urgent';
   notes: string | null;
   updated_at: string;
 }
@@ -135,7 +135,7 @@ export interface DailyPrioritizationExecutionSyncRecord {
   recommended_next_step: string | null;
   interaction_occurred: boolean;
   ready_to_record: boolean;
-  status: 'open' | 'in_progress' | 'completed' | 'deferred' | 'unable_to_complete';
+  status: 'open' | 'in_progress' | 'completed' | 'deferred' | 'unable_to_complete' | 'urgent';
   created_at: string;
   updated_at: string;
 }

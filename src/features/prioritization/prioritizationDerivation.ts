@@ -1,5 +1,6 @@
 import type { MobileEncounterCapture } from '../../contracts/mobileContracts';
-import type { CaptureOptionLists } from '../../config/siteCaptureOptions';
+import { createPrioritizationItemId, normalizePrioritizationIdentity } from '../../contracts/prioritizationIds';
+import { getStationNames, type CaptureOptionLists } from '../../config/siteCaptureOptions';
 import { createMockPrioritizationItems } from './mockData';
 import { sortPrioritizationItems } from './prioritizationHelpers';
 import type {
@@ -51,6 +52,10 @@ const STATION_BUCKET_BY_RISK: Record<
     bucket: 'low_risk_area',
     relatedEncounterType: 'Relationship Development',
   },
+  none: {
+    bucket: 'low_risk_area',
+    relatedEncounterType: null,
+  },
 };
 
 const normalizeKey = (value: string | null) =>
@@ -58,18 +63,6 @@ const normalizeKey = (value: string | null) =>
     .trim()
     .toLocaleLowerCase()
     .replace(/\s+/g, ' ');
-
-const slugify = (value: string) =>
-  normalizeKey(value)
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'unassigned';
-
-const createDerivedItemId = (
-  prioritizationDate: string,
-  bucket: PrioritizationItem['priorityBucket'],
-  itemType: PrioritizationItem['itemType'],
-  identity: string,
-) => `pri-${prioritizationDate}-${bucket}-${itemType}-${slugify(identity)}`;
 
 const hasTag = (capture: MobileEncounterCapture, marker: string) =>
   capture.tags.some((tag) => normalizeKey(tag) === normalizeKey(marker));
@@ -98,7 +91,7 @@ export const getKnownStationsForPrioritization = (
   stationRiskMap: PrioritizationSettings['stationRiskMap'],
 ) => {
   const values = [
-    ...captureOptions.stations,
+    ...getStationNames(captureOptions),
     ...captures.map((capture) => capture.station ?? '').filter(Boolean),
     ...Object.keys(stationRiskMap),
   ];
@@ -210,7 +203,7 @@ export const derivePrioritizationItems = ({
 
       seenEmployeeKeys.add(employeeKey);
       items.push({
-        id: createDerivedItemId(
+        id: createPrioritizationItemId(
           prioritizationDate,
           'open_pa_follow_up',
           'employee',
@@ -222,7 +215,7 @@ export const derivePrioritizationItems = ({
         employeeName: capture.employeeDisplayName,
         employeeId: capture.employeeId,
         stationName: capture.station,
-        stationId: capture.station ? slugify(capture.station) : null,
+        stationId: capture.station ? normalizePrioritizationIdentity(capture.station) : null,
         sourceReason: `PA-related mobile capture still has an open follow-up flag from ${capture.encounterDate}.`,
         relatedEncounterType: 'PA Follow-Ups',
         relatedAssessmentType: 'Physical Assessment',
@@ -245,7 +238,7 @@ export const derivePrioritizationItems = ({
     const latestCapture = latestCaptureByEmployee[employeeKey];
     seenEmployeeKeys.add(employeeKey);
     items.push({
-      id: createDerivedItemId(
+      id: createPrioritizationItemId(
         prioritizationDate,
         'worker_not_yet_encountered',
         'employee',
@@ -257,7 +250,9 @@ export const derivePrioritizationItems = ({
       employeeName: rosterName,
       employeeId: latestCapture?.employeeId ?? null,
       stationName: latestCapture?.station ?? null,
-      stationId: latestCapture?.station ? slugify(latestCapture.station) : null,
+      stationId: latestCapture?.station
+        ? normalizePrioritizationIdentity(latestCapture.station)
+        : null,
       sourceReason: `Worker is on today's roster but no encounter has been captured today.`,
       relatedEncounterType: 'Relationship Development',
       relatedAssessmentType: null,
@@ -278,7 +273,12 @@ export const derivePrioritizationItems = ({
 
         seenEmployeeKeys.add(employeeKey);
         items.push({
-          id: createDerivedItemId(prioritizationDate, rule.bucket, 'employee', capture.employeeDisplayName),
+          id: createPrioritizationItemId(
+            prioritizationDate,
+            rule.bucket,
+            'employee',
+            capture.employeeDisplayName,
+          ),
           itemType: 'employee',
           priorityBucket: rule.bucket,
           displayLabel:
@@ -288,7 +288,9 @@ export const derivePrioritizationItems = ({
           employeeName: capture.employeeDisplayName,
           employeeId: capture.employeeId,
           stationName: capture.station,
-          stationId: capture.station ? slugify(capture.station) : null,
+          stationId: capture.station
+            ? normalizePrioritizationIdentity(capture.station)
+            : null,
           sourceReason: rule.reason,
           relatedEncounterType: rule.relatedEncounterType,
           relatedAssessmentType: rule.relatedAssessmentType,
@@ -314,14 +316,19 @@ export const derivePrioritizationItems = ({
     const stationBucket = STATION_BUCKET_BY_RISK[riskLevel];
 
     items.push({
-      id: createDerivedItemId(prioritizationDate, stationBucket.bucket, 'station', displayStationName),
+      id: createPrioritizationItemId(
+        prioritizationDate,
+        stationBucket.bucket,
+        'station',
+        displayStationName,
+      ),
       itemType: 'station',
       priorityBucket: stationBucket.bucket,
       displayLabel: displayStationName,
       employeeName: null,
       employeeId: null,
       stationName: displayStationName,
-      stationId: slugify(displayStationName),
+      stationId: normalizePrioritizationIdentity(displayStationName),
       sourceReason: `${riskLevel[0].toUpperCase()}${riskLevel.slice(1)}-risk station configured in prioritization settings.`,
       relatedEncounterType: stationBucket.relatedEncounterType,
       relatedAssessmentType: 'Observational Scan',

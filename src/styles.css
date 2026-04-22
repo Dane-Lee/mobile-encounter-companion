@@ -220,14 +220,30 @@ a:hover {
 .mode-switcher {
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 0.4rem;
   padding: 0.35rem;
   border: 1px solid rgba(148, 176, 228, 0.22);
   border-radius: 20px;
   background: linear-gradient(180deg, var(--bg-surface-inset), #173157);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.mode-switcher__primary-row,
+.mode-switcher__secondary-row {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.mode-switcher__primary-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mode-switcher__secondary-row {
+  grid-template-columns: minmax(0, 1fr);
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(148, 176, 228, 0.18);
 }
 
 .mode-switcher button {
@@ -1184,6 +1200,10 @@ a:hover {
   gap: 0.75rem;
 }
 
+.option-editor__add-row--linked {
+  align-items: end;
+}
+
 .option-editor__add-row input {
   width: 100%;
   min-height: 52px;
@@ -1224,6 +1244,23 @@ a:hover {
 .option-editor__item span {
   color: var(--text);
   font-weight: 600;
+}
+
+.option-editor__item--linked {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.option-editor__item-copy {
+  min-width: 0;
+}
+
+.option-editor__parent-field {
+  min-width: 0;
+}
+
+.option-editor__parent-field span {
+  color: var(--text-subtle);
 }
 
 .option-editor__remove {
@@ -1494,22 +1531,90 @@ a:hover {
   padding: 0.4rem 1rem 1rem;
 }
 
+.guide-status-panel {
+  padding: 0.75rem 0 0.3rem;
+}
+
 .guide-section {
-  padding: 0.95rem 0;
   border-top: 1px solid rgba(148, 176, 228, 0.14);
 }
 
-.guide-section:first-child {
+.guide-section:first-of-type {
   border-top: 0;
 }
 
-.guide-section h3 {
-  margin: 0 0 0.75rem;
-  font-size: 0.86rem;
-  font-weight: 800;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+.guide-section > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.95rem 0;
+  list-style: none;
+  cursor: pointer;
+}
+
+.guide-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.guide-section > summary::after {
+  content: "+";
   color: var(--accent-strong);
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.guide-section[open] > summary::after {
+  content: "-";
+}
+
+.guide-section__summary-copy {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.guide-section__summary-copy strong {
+  color: var(--text-strong);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.guide-section__summary-copy span {
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.guide-section__content {
+  padding: 0 0 1rem;
+}
+
+.guide-section__content > :first-child {
+  margin-top: 0;
+}
+
+.guide-section__content > :last-child {
+  margin-bottom: 0;
+}
+
+.guide-section__content .guide-mode-grid {
+  margin-top: 0.2rem;
+}
+
+.guide-section__content .guide-list,
+.guide-section__content .guide-steps {
+  margin-top: 0.2rem;
+}
+
+.guide-section__content .guide-mode-card {
+  border-color: rgba(148, 176, 228, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.guide-section__content .guide-mode-card p {
+  margin-top: 0.4rem;
 }
 
 .guide-list,
@@ -1885,6 +1990,15 @@ a:hover {
 
   .option-editor__add-row {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .option-editor__add-row--linked {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+
+  .option-editor__item--linked {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    align-items: end;
   }
 
   .summary-grid {

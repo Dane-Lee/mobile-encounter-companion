@@ -62,6 +62,14 @@ const syncLabelByStatus: Record<MobileEncounterCapture['syncStatus'], string> = 
   sync_error: 'Sync Error',
 };
 
+const buildWorkplaceMeta = (capture: MobileEncounterCapture) => {
+  const parts = [capture.department, capture.location, capture.station].filter(
+    (value): value is string => Boolean(value),
+  );
+
+  return parts.length > 0 ? parts.join(' | ') : null;
+};
+
 const CaptureList = ({
   captures,
   onMarkReady,
@@ -184,6 +192,7 @@ const CaptureList = ({
                 {group.items.map((capture) => {
                   const selectable =
                     capture.captureStatus !== 'draft' && capture.captureStatus !== 'archived';
+                  const workplaceMeta = buildWorkplaceMeta(capture);
 
                   return (
                     <article key={capture.captureId} className="capture-item">
@@ -224,12 +233,10 @@ const CaptureList = ({
                       </div>
 
                       <h4>{capture.employeeDisplayName}</h4>
-                      <p>{capture.summaryShort}</p>
+                      <p>{capture.summaryShort || 'No summary added.'}</p>
 
                       <div className="capture-item__meta">
-                        {capture.department && capture.station ? (
-                          <span>{`${capture.department} | ${capture.station}`}</span>
-                        ) : null}
+                        {workplaceMeta ? <span>{workplaceMeta}</span> : null}
                         <span>{capture.encounterType}</span>
                         <span>{toLocalDateTimeLabel(capture.updatedOnDeviceAt)}</span>
                       </div>

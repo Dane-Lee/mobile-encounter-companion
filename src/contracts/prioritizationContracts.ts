@@ -1,13 +1,14 @@
 import type { EncounterType } from './encounterTypes';
 
 export const PRIORITIZATION_SYNC_STATUSES = ['local_only', 'synced', 'sync_error'] as const;
-export const STATION_RISK_LEVELS = ['high', 'medium', 'low'] as const;
+export const STATION_RISK_LEVELS = ['high', 'medium', 'low', 'none'] as const;
 export const PRIORITIZATION_STATUSES = [
   'open',
   'in_progress',
   'completed',
   'deferred',
   'unable_to_complete',
+  'urgent',
 ] as const;
 
 export type PrioritizationSyncStatus = (typeof PRIORITIZATION_SYNC_STATUSES)[number];
