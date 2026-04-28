@@ -121,6 +121,8 @@ export const uploadMobileCaptureEntrySyncRecord = async (
   const response = await createMobileCaptureEntry({
     user_id: record.user_id,
     worksite_id: record.worksite_id,
+    source_app: record.source_app,
+    sync_record_type: record.sync_record_type,
     local_mobile_id: record.local_mobile_id,
     created_at: record.created_at,
     entry_date: record.entry_date,

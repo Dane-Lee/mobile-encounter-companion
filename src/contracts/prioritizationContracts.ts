@@ -15,6 +15,17 @@ export type PrioritizationSyncStatus = (typeof PRIORITIZATION_SYNC_STATUSES)[num
 export type StationRiskLevel = (typeof STATION_RISK_LEVELS)[number];
 export type PrioritizationStatus = (typeof PRIORITIZATION_STATUSES)[number];
 
+export interface PrioritizationRosterRecord {
+  employeeName: string;
+  employeeId: string | null;
+}
+
+export interface PrioritizationStationRecord {
+  stationName: string;
+  stationId: string | null;
+  riskLevel: StationRiskLevel | null;
+}
+
 export interface PrioritizationItemOverride {
   itemId: string;
   status: PrioritizationStatus;
@@ -40,6 +51,7 @@ export interface PrioritizationSettings {
   schemaVersion: string;
   settingsId: string;
   stationRiskMap: Record<string, StationRiskLevel>;
+  stationRecords: PrioritizationStationRecord[];
   updatedAt: string;
   syncStatus: PrioritizationSyncStatus;
   syncError: string | null;
@@ -51,6 +63,7 @@ export interface DailyPrioritizationState {
   schemaVersion: string;
   prioritizationDate: string;
   rosterNames: string[];
+  rosterRecords: PrioritizationRosterRecord[];
   itemOverrides: PrioritizationItemOverride[];
   executionRecords: PrioritizationExecutionRecord[];
   updatedAt: string;

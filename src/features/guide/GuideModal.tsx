@@ -55,7 +55,7 @@ const guideSections = [
     summary: 'Only relevant when backend sync has been configured.',
     content: (
       <ol className="guide-steps">
-        <li>If configured, ready mobile captures can be uploaded as <code>mobile_capture_entry</code> records.</li>
+        <li>If configured, ready mobile captures can be sent as <code>mobile_capture_entry</code> records for desktop review.</li>
         <li>If configured, Week View can refresh desktop-authored <code>weekly_snapshot</code> records from the backend.</li>
         <li>If configured, Prioritization can sync daily roster, station risk settings, and that day&apos;s prioritization state.</li>
       </ol>

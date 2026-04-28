@@ -11,6 +11,13 @@ import { listCaptureRecordsForDisplay } from '../features/capture/captureService
 import {
   createDailyPrioritizationState,
   createDefaultPrioritizationSettings,
+  getRosterRecordsForState,
+  getStationRecordsForSettings,
+  mergeRosterNamesIntoRecords,
+  mergeStationRiskMapIntoRecords,
+  normalizeDailyPrioritizationStateInputs,
+  normalizePrioritizationSettingsInputs,
+  stationRecordsToRiskMap,
 } from '../features/prioritization/prioritizationStateService';
 import {
   getDailyPrioritizationStateRecord,
@@ -25,7 +32,7 @@ import {
   listStoredWeekSnapshots,
   saveStoredWeekSnapshots,
 } from '../storage/weekSnapshotStore';
-import { mapWeeklySnapshotSyncRecordToStoredSnapshot } from './syncMappers';
+import { mapWeeklySnapshotSyncRecordToStoredSnapshot, normalizeCaptureEntryDate } from './syncMappers';
 import {
   createMobileCaptureEntry,
   fetchWeeklySnapshots,
@@ -124,9 +131,11 @@ const mapCaptureToUploadRequest = (
 ): MobileCaptureEntryRequest => ({
   user_id: scope.userId,
   worksite_id: scope.worksiteId,
+  source_app: 'mobile',
+  sync_record_type: 'mobile_capture_entry',
   local_mobile_id: capture.captureId,
   created_at: capture.createdOnDeviceAt,
-  entry_date: capture.encounterDate,
+  entry_date: normalizeCaptureEntryDate(capture.encounterDate),
   device_id: scope.deviceId,
   version: scope.version,
   employee_name: capture.employeeDisplayName || null,
@@ -165,7 +174,7 @@ const applyCaptureSyncResponse = (
   desktopRecordId: response.imported_desktop_record_id ?? capture.desktopRecordId,
   importResolution:
     (response.import_resolution as MobileEncounterCapture['importResolution']) ??
-    capture.importResolution,
+    (response.sync_status === 'sync_error' ? capture.importResolution : 'pending_review'),
 });
 
 const applyCaptureSyncFailure = (
@@ -250,18 +259,26 @@ const chooseNewerDailyState = (
 const mapRemoteSettingsToLocal = (
   localSettings: PrioritizationSettings,
   response: PrioritizationSettingsResponse,
-): PrioritizationSettings => ({
-  ...localSettings,
-  stationRiskMap: response.station_risk_map,
-  updatedAt: response.updated_at,
-  syncStatus: 'synced',
-  syncError: null,
-  syncRecordId:
-    response.id !== undefined && response.id !== null
-      ? String(response.id)
-      : localSettings.syncRecordId,
-  syncUpdatedAt: response.updated_at,
-});
+): PrioritizationSettings => {
+  const stationRecords = mergeStationRiskMapIntoRecords(
+    getStationRecordsForSettings(localSettings),
+    response.station_risk_map,
+  );
+
+  return {
+    ...localSettings,
+    stationRiskMap: stationRecordsToRiskMap(stationRecords),
+    stationRecords,
+    updatedAt: response.updated_at,
+    syncStatus: 'synced',
+    syncError: null,
+    syncRecordId:
+      response.id !== undefined && response.id !== null
+        ? String(response.id)
+        : localSettings.syncRecordId,
+    syncUpdatedAt: response.updated_at,
+  };
+};
 
 const mapLocalSettingsToRequest = (
   settings: PrioritizationSettings,
@@ -269,7 +286,7 @@ const mapLocalSettingsToRequest = (
 ): PrioritizationSettingsRequest => ({
   user_id: scope.userId,
   worksite_id: scope.worksiteId,
-  station_risk_map: settings.stationRiskMap,
+  station_risk_map: stationRecordsToRiskMap(getStationRecordsForSettings(settings)),
   updated_at: settings.updatedAt,
   version: scope.version,
 });
@@ -281,6 +298,10 @@ const mapRemoteDailyStateToLocal = (
   ...localState,
   prioritizationDate: response.prioritization_date,
   rosterNames: response.roster_names,
+  rosterRecords: mergeRosterNamesIntoRecords(
+    getRosterRecordsForState(localState),
+    response.roster_names,
+  ),
   itemOverrides: response.item_overrides.map((override) => ({
     itemId: override.item_id,
     status: override.status,
@@ -317,7 +338,7 @@ const mapLocalDailyStateToRequest = (
   user_id: scope.userId,
   worksite_id: scope.worksiteId,
   prioritization_date: state.prioritizationDate,
-  roster_names: state.rosterNames,
+  roster_names: getRosterRecordsForState(state).map((record) => record.employeeName),
   item_overrides: state.itemOverrides.map((override) => ({
     item_id: override.itemId,
     status: override.status,
@@ -434,7 +455,9 @@ export const syncPrioritizationSettings = async () => {
     throw new Error(errors.join(' '));
   }
 
-  const localSettings = (await getPrioritizationSettingsRecord()) ?? createDefaultPrioritizationSettings();
+  const localSettings = normalizePrioritizationSettingsInputs(
+    (await getPrioritizationSettingsRecord()) ?? createDefaultPrioritizationSettings(),
+  );
   const remoteSettingsResponse = await getPrioritizationSettings({
     userId: settings.userId,
     worksiteId: settings.worksiteId,
@@ -474,8 +497,10 @@ export const syncDailyPrioritizationState = async (
   }
 
   const localState =
-    (await getDailyPrioritizationStateRecord(prioritizationDate)) ??
-    createDailyPrioritizationState(prioritizationDate);
+    normalizeDailyPrioritizationStateInputs(
+      (await getDailyPrioritizationStateRecord(prioritizationDate)) ??
+        createDailyPrioritizationState(prioritizationDate),
+    );
   const remoteStateResponse = await getDailyPrioritizationState({
     userId: settings.userId,
     worksiteId: settings.worksiteId,

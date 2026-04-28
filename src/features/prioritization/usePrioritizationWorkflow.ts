@@ -13,12 +13,16 @@ import { createCapturePrefillFromPrioritizationItem, derivePrioritizationItems }
 import {
   createDailyPrioritizationState,
   createDefaultPrioritizationSettings,
+  normalizeDailyPrioritizationStateInputs,
+  normalizePrioritizationSettingsInputs,
   parseRosterText,
   withExecutionRecord,
   withExecutionStatusMirrored,
   withItemOverride,
   withUpdatedRoster,
+  withUpdatedRosterRecords,
   withUpdatedStationRiskMap,
+  withUpdatedStationRecords,
 } from './prioritizationStateService';
 import {
   loadPrioritizationSyncData,
@@ -28,7 +32,9 @@ import {
 import type {
   CapturePrefillRequest,
   PrioritizationExecutionRecord,
+  PrioritizationRosterRecord,
   PrioritizationSettings,
+  PrioritizationStationRecord,
   PrioritizationStatus,
   StationRiskLevel,
 } from './types';
@@ -140,9 +146,13 @@ export const usePrioritizationWorkflow = ({
         getDailyPrioritizationStateRecord(prioritizationDate),
       ]);
 
-      const localSettings = storedSettings ?? createDefaultPrioritizationSettings();
+      const localSettings = normalizePrioritizationSettingsInputs(
+        storedSettings ?? createDefaultPrioritizationSettings(),
+      );
       const localDailyState = normalizeDailyPrioritizationStateRecordIds(
-        storedDailyState ?? createDailyPrioritizationState(prioritizationDate),
+        normalizeDailyPrioritizationStateInputs(
+          storedDailyState ?? createDailyPrioritizationState(prioritizationDate),
+        ),
       );
       const syncedData = await loadPrioritizationSyncData({
         config: syncConfig,
@@ -256,11 +266,31 @@ export const usePrioritizationWorkflow = ({
         },
         'Daily roster could not be saved.',
       ),
+    saveRosterRecords: (rosterRecords: PrioritizationRosterRecord[]) =>
+      runBusyAction(
+        async () => {
+          await persistDailyState(
+            withUpdatedRosterRecords(dailyState, rosterRecords),
+            'Daily roster saved.',
+          );
+        },
+        'Daily roster could not be saved.',
+      ),
     saveStationRiskMap: (stationRiskMap: Record<string, StationRiskLevel | null | ''>) =>
       runBusyAction(
         async () => {
           await persistSettings(
             withUpdatedStationRiskMap(settings, stationRiskMap),
+            'Station risk settings saved.',
+          );
+        },
+        'Station risk settings could not be saved.',
+      ),
+    saveStationRecords: (stationRecords: PrioritizationStationRecord[]) =>
+      runBusyAction(
+        async () => {
+          await persistSettings(
+            withUpdatedStationRecords(settings, stationRecords),
             'Station risk settings saved.',
           );
         },

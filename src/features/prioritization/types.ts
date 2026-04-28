@@ -3,7 +3,9 @@ import type {
   DailyPrioritizationState,
   PrioritizationExecutionRecord,
   PrioritizationItemOverride,
+  PrioritizationRosterRecord,
   PrioritizationSettings,
+  PrioritizationStationRecord,
   PrioritizationStatus,
   StationRiskLevel,
 } from '../../contracts/prioritizationContracts';
@@ -82,6 +84,7 @@ export interface CapturePrefillRequest {
 export interface PrioritizationSummary {
   totalItems: number;
   openItems: number;
+  inProgressItems: number;
   employeeItems: number;
   stationItems: number;
   executionRecords: number;
@@ -96,7 +99,9 @@ export type {
   DailyPrioritizationState,
   PrioritizationExecutionRecord,
   PrioritizationItemOverride,
+  PrioritizationRosterRecord,
   PrioritizationSettings,
+  PrioritizationStationRecord,
   PrioritizationStatus,
   StationRiskLevel,
 };

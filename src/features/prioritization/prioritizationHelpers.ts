@@ -77,6 +77,7 @@ export const getPrototypeSummary = (
 ) => ({
   totalItems: items.length,
   openItems: items.filter((item) => item.status === 'open').length,
+  inProgressItems: items.filter((item) => item.status === 'in_progress').length,
   employeeItems: items.filter((item) => item.itemType === 'employee').length,
   stationItems: items.filter((item) => item.itemType === 'station').length,
   executionRecords: executionRecords.length,

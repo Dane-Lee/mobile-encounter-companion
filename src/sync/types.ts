@@ -95,6 +95,8 @@ export interface MobileWeeklySnapshotResponse {
 export interface MobileCaptureEntryRequest {
   user_id: string;
   worksite_id: string;
+  source_app?: 'mobile';
+  sync_record_type?: 'mobile_capture_entry';
   local_mobile_id: string;
   created_at: string;
   entry_date: string;

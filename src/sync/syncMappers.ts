@@ -13,6 +13,15 @@ import type {
   PrioritizationSettings,
 } from '../contracts/prioritizationContracts';
 import { getCurrentTimezone, toLocalDateString } from '../lib/dateTime';
+import {
+  getRosterRecordsForState,
+  getStationRecordsForSettings,
+  mergeRosterNamesIntoRecords,
+  mergeStationRiskMapIntoRecords,
+  normalizeDailyPrioritizationStateInputs,
+  normalizePrioritizationSettingsInputs,
+  stationRecordsToRiskMap,
+} from '../features/prioritization/prioritizationStateService';
 import type { SyncConfig } from './syncConfig';
 import type {
   DailyPrioritizationExecutionSyncRecord,
@@ -32,7 +41,8 @@ export const withCaptureSyncDefaults = (
   const nextSyncError = capture.syncError ?? null;
   const nextSyncRecordId = capture.syncRecordId ?? null;
   const nextSyncUpdatedAt = capture.syncUpdatedAt ?? null;
-  const nextImportResolution = capture.importResolution ?? null;
+  const nextImportResolution =
+    capture.importResolution ?? (nextSyncStatus === 'uploaded' ? 'pending_review' : null);
 
   if (
     nextSyncStatus === capture.syncStatus &&
@@ -84,6 +94,20 @@ const buildCaptureOptionsJson = (capture: MobileEncounterCapture) => {
   return Object.keys(options).length > 0 ? options : null;
 };
 
+export const normalizeCaptureEntryDate = (value: string) => {
+  const trimmedValue = value.trim();
+
+  if (/^\d{8}$/.test(trimmedValue)) {
+    return `${trimmedValue.slice(0, 4)}-${trimmedValue.slice(4, 6)}-${trimmedValue.slice(6, 8)}`;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(trimmedValue)) {
+    return trimmedValue.slice(0, 10);
+  }
+
+  return trimmedValue;
+};
+
 export const mapCaptureToMobileCaptureEntrySyncRecord = (
   capture: MobileEncounterCapture,
   config: SyncConfig,
@@ -98,7 +122,7 @@ export const mapCaptureToMobileCaptureEntrySyncRecord = (
   local_mobile_id: capture.captureId,
   created_at: capture.createdOnDeviceAt,
   updated_at: capture.updatedOnDeviceAt,
-  entry_date: capture.encounterDate,
+  entry_date: normalizeCaptureEntryDate(capture.encounterDate),
   employee_name: capture.employeeDisplayName || null,
   employee_ref: capture.employeeId,
   encounter_type: capture.encounterType,
@@ -120,9 +144,11 @@ export const applyUploadedCaptureSyncRecord = (
   syncStatus: syncedRecord.sync_status,
   syncError: null,
   syncRecordId: syncedRecord.id,
-  syncUpdatedAt: syncedRecord.updated_at,
+  syncUpdatedAt: syncedRecord.updated_at ?? new Date().toISOString(),
   desktopRecordId: syncedRecord.imported_desktop_record_id,
-  importResolution: syncedRecord.import_resolution,
+  importResolution:
+    syncedRecord.import_resolution ??
+    (syncedRecord.sync_status === 'uploaded' ? 'pending_review' : capture.importResolution),
 });
 
 export const applyCaptureSyncError = (
@@ -370,23 +396,25 @@ export const withStoredWeekSnapshotSyncDefaults = (
 
 export const withPrioritizationSettingsSyncDefaults = (
   settings: PrioritizationSettings,
-): PrioritizationSettings => ({
-  ...settings,
-  syncStatus: settings.syncStatus ?? 'local_only',
-  syncError: settings.syncError ?? null,
-  syncRecordId: settings.syncRecordId ?? null,
-  syncUpdatedAt: settings.syncUpdatedAt ?? null,
-});
+): PrioritizationSettings =>
+  normalizePrioritizationSettingsInputs({
+    ...settings,
+    syncStatus: settings.syncStatus ?? 'local_only',
+    syncError: settings.syncError ?? null,
+    syncRecordId: settings.syncRecordId ?? null,
+    syncUpdatedAt: settings.syncUpdatedAt ?? null,
+  });
 
 export const withDailyPrioritizationStateSyncDefaults = (
   state: DailyPrioritizationState,
-): DailyPrioritizationState => ({
-  ...state,
-  syncStatus: state.syncStatus ?? 'local_only',
-  syncError: state.syncError ?? null,
-  syncRecordId: state.syncRecordId ?? null,
-  syncUpdatedAt: state.syncUpdatedAt ?? null,
-});
+): DailyPrioritizationState =>
+  normalizeDailyPrioritizationStateInputs({
+    ...state,
+    syncStatus: state.syncStatus ?? 'local_only',
+    syncError: state.syncError ?? null,
+    syncRecordId: state.syncRecordId ?? null,
+    syncUpdatedAt: state.syncUpdatedAt ?? null,
+  });
 
 export const mapPrioritizationSettingsToSyncRecord = (
   settings: PrioritizationSettings,
@@ -399,7 +427,7 @@ export const mapPrioritizationSettingsToSyncRecord = (
   worksite_id: config.worksiteId ?? '',
   source_app: 'mobile',
   sync_record_type: 'prioritization_settings',
-  station_risk_map: settings.stationRiskMap,
+  station_risk_map: stationRecordsToRiskMap(getStationRecordsForSettings(settings)),
   updated_at: settings.updatedAt,
   version: config.version,
 });
@@ -424,7 +452,9 @@ export const mapDailyPrioritizationStateToSyncRecord = (
   state: DailyPrioritizationState,
   config: SyncConfig,
 ): DailyPrioritizationStateSyncRecord => {
-  const normalizedState = normalizeDailyPrioritizationStateRecordIds(state);
+  const normalizedState = normalizeDailyPrioritizationStateInputs(
+    normalizeDailyPrioritizationStateRecordIds(state),
+  );
 
   return {
     id:
@@ -435,7 +465,7 @@ export const mapDailyPrioritizationStateToSyncRecord = (
     source_app: 'mobile',
     sync_record_type: 'daily_prioritization_state',
     prioritization_date: normalizedState.prioritizationDate,
-    roster_names: normalizedState.rosterNames,
+    roster_names: getRosterRecordsForState(normalizedState).map((record) => record.employeeName),
     item_overrides: normalizedState.itemOverrides.map((override) => ({
       item_id: override.itemId,
       status: override.status,
@@ -451,15 +481,23 @@ export const mapDailyPrioritizationStateToSyncRecord = (
 export const applyPrioritizationSettingsSyncRecord = (
   settings: PrioritizationSettings,
   record: PrioritizationSettingsSyncRecord,
-): PrioritizationSettings => ({
-  ...settings,
-  stationRiskMap: record.station_risk_map,
-  updatedAt: record.updated_at,
-  syncStatus: 'synced',
-  syncError: null,
-  syncRecordId: record.id,
-  syncUpdatedAt: record.updated_at,
-});
+): PrioritizationSettings => {
+  const stationRecords = mergeStationRiskMapIntoRecords(
+    getStationRecordsForSettings(settings),
+    record.station_risk_map,
+  );
+
+  return {
+    ...settings,
+    stationRiskMap: stationRecordsToRiskMap(stationRecords),
+    stationRecords,
+    updatedAt: record.updated_at,
+    syncStatus: 'synced',
+    syncError: null,
+    syncRecordId: record.id,
+    syncUpdatedAt: record.updated_at,
+  };
+};
 
 export const applyDailyPrioritizationStateSyncRecord = (
   state: DailyPrioritizationState,
@@ -469,6 +507,10 @@ export const applyDailyPrioritizationStateSyncRecord = (
     ...state,
     prioritizationDate: record.prioritization_date,
     rosterNames: record.roster_names,
+    rosterRecords: mergeRosterNamesIntoRecords(
+      getRosterRecordsForState(state),
+      record.roster_names,
+    ),
     itemOverrides: record.item_overrides.map((override) => ({
       itemId: override.item_id,
       status: override.status,

@@ -180,7 +180,7 @@ export const useCompanionData = () => {
 
       return {
         tone: 'success',
-        message: `Uploaded ${result.uploadedCount} capture${result.uploadedCount === 1 ? '' : 's'} to sync.${suffix}`,
+        message: `Sent ${result.uploadedCount} capture${result.uploadedCount === 1 ? '' : 's'} to desktop review.${suffix}`,
       };
     });
   };

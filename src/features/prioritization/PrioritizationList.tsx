@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import InfoDialog from '../../components/InfoDialog';
 import SectionCard from '../../components/SectionCard';
 import {
   getDueDateLabel,
@@ -21,19 +23,32 @@ const PrioritizationList = ({
   executionRecords,
   disabled = false,
   onOpenItem,
-}: PrioritizationListProps) => (
-  <div className="screen-column">
-    {groups.map(({ bucket, items }) => (
-      <SectionCard
-        key={bucket.id}
-        title={`${bucket.order}. ${bucket.title}`}
-        subtitle={bucket.description}
-        action={
-          <span className="prioritization-bucket__count">
-            {items.length} item{items.length === 1 ? '' : 's'}
-          </span>
-        }
-      >
+}: PrioritizationListProps) => {
+  const [openBucketId, setOpenBucketId] = useState<string | null>(null);
+  const openBucket = groups.find(({ bucket }) => bucket.id === openBucketId)?.bucket ?? null;
+
+  return (
+    <div className="screen-column">
+      {groups.map(({ bucket, items }) => (
+        <SectionCard
+          key={bucket.id}
+          title={`${bucket.order}. ${bucket.title}`}
+          action={
+            <div className="prioritization-bucket-actions">
+              <button
+                type="button"
+                className="info-button"
+                aria-label={`Show ${bucket.title} details`}
+                onClick={() => setOpenBucketId(bucket.id)}
+              >
+                i
+              </button>
+              <span className="prioritization-bucket__count">
+                {items.length} item{items.length === 1 ? '' : 's'}
+              </span>
+            </div>
+          }
+        >
         {items.length === 0 ? (
           <div className="empty-state">
             <p>No items in this bucket.</p>
@@ -91,9 +106,17 @@ const PrioritizationList = ({
             })}
           </div>
         )}
-      </SectionCard>
-    ))}
-  </div>
-);
+        </SectionCard>
+      ))}
+
+      <InfoDialog
+        open={Boolean(openBucket)}
+        title={openBucket?.title ?? 'Prioritization bucket'}
+        description={openBucket?.description ?? ''}
+        onClose={() => setOpenBucketId(null)}
+      />
+    </div>
+  );
+};
 
 export default PrioritizationList;

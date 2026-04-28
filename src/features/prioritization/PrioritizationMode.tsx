@@ -44,8 +44,8 @@ const PrioritizationMode = ({
     updateExecutionRecord,
     toggleExecutionChecklistSection,
     refreshList,
-    saveRosterText,
-    saveStationRiskMap,
+    saveRosterRecords,
+    saveStationRecords,
     createCapturePrefillRequest,
   } = usePrioritizationWorkflow({
     captures,
@@ -56,7 +56,7 @@ const PrioritizationMode = ({
   const knownStations = getKnownStationsForPrioritization(
     captureOptions,
     captures,
-    settings.stationRiskMap,
+    settings,
   );
 
   return (
@@ -92,6 +92,10 @@ const PrioritizationMode = ({
             <span>Still open</span>
           </div>
           <div>
+            <strong>{summary.inProgressItems}</strong>
+            <span>In progress</span>
+          </div>
+          <div>
             <strong>{summary.employeeItems}</strong>
             <span>Employee-based items</span>
           </div>
@@ -113,8 +117,8 @@ const PrioritizationMode = ({
 
         <div className="prioritization-status-summary">
           <span>{prioritizationDate}</span>
-          <span>{dailyState.rosterNames.length} workers on roster</span>
-          <span>{Object.keys(settings.stationRiskMap).length} stations risk-ranked</span>
+          <span>{dailyState.rosterRecords.length} workers on roster</span>
+          <span>{settings.stationRecords.filter((record) => record.riskLevel).length} stations risk-ranked</span>
           <span>{syncConfigured ? 'Backend sync enabled' : 'Local-only fallback'}</span>
         </div>
 
@@ -154,12 +158,12 @@ const PrioritizationMode = ({
       </SectionCard>
 
       <PrioritizationSettingsPanel
-        rosterNames={dailyState.rosterNames}
+        rosterRecords={dailyState.rosterRecords}
         knownStations={knownStations}
-        stationRiskMap={settings.stationRiskMap}
+        stationRecords={settings.stationRecords}
         disabled={isLoading || isBusy}
-        onSaveRoster={(value) => void saveRosterText(value)}
-        onSaveStationRiskMap={(value) => void saveStationRiskMap(value)}
+        onSaveRosterRecords={(value) => void saveRosterRecords(value)}
+        onSaveStationRecords={(value) => void saveStationRecords(value)}
       />
 
       {isLoading ? (

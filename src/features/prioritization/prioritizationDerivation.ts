@@ -3,6 +3,10 @@ import { createPrioritizationItemId, normalizePrioritizationIdentity } from '../
 import { getStationNames, type CaptureOptionLists } from '../../config/siteCaptureOptions';
 import { createMockPrioritizationItems } from './mockData';
 import { sortPrioritizationItems } from './prioritizationHelpers';
+import {
+  getRosterRecordsForState,
+  getStationRecordsForSettings,
+} from './prioritizationStateService';
 import type {
   DailyPrioritizationState,
   PrioritizationDerivedState,
@@ -88,12 +92,14 @@ const getLatestCaptureByEmployee = (captures: MobileEncounterCapture[]) =>
 export const getKnownStationsForPrioritization = (
   captureOptions: CaptureOptionLists,
   captures: MobileEncounterCapture[],
-  stationRiskMap: PrioritizationSettings['stationRiskMap'],
+  settings: PrioritizationSettings,
 ) => {
+  const stationRecords = getStationRecordsForSettings(settings);
   const values = [
     ...getStationNames(captureOptions),
     ...captures.map((capture) => capture.station ?? '').filter(Boolean),
-    ...Object.keys(stationRiskMap),
+    ...Object.keys(settings.stationRiskMap),
+    ...stationRecords.map((record) => record.stationName),
   ];
 
   const seen = new Set<string>();
@@ -166,9 +172,13 @@ export const derivePrioritizationItems = ({
   settings: PrioritizationSettings;
   state: DailyPrioritizationState;
 }): PrioritizationDerivedState => {
+  const rosterRecords = getRosterRecordsForState(state);
+  const stationRecords = getStationRecordsForSettings(settings);
+  const riskRankedStationRecords = stationRecords.filter((record) => record.riskLevel);
   const hasLiveInputs =
     captures.length > 0 ||
-    state.rosterNames.length > 0 ||
+    rosterRecords.length > 0 ||
+    riskRankedStationRecords.length > 0 ||
     Object.keys(settings.stationRiskMap).length > 0;
 
   if (!hasLiveInputs) {
@@ -229,7 +239,8 @@ export const derivePrioritizationItems = ({
     todayCaptures.map((capture) => normalizeKey(capture.employeeDisplayName)).filter(Boolean),
   );
 
-  state.rosterNames.forEach((rosterName) => {
+  rosterRecords.forEach((rosterRecord) => {
+    const rosterName = rosterRecord.employeeName;
     const employeeKey = normalizeKey(rosterName);
     if (!employeeKey || seenEmployeeKeys.has(employeeKey) || todayEncounteredEmployeeKeys.has(employeeKey)) {
       return;
@@ -248,7 +259,7 @@ export const derivePrioritizationItems = ({
       priorityBucket: 'worker_not_yet_encountered',
       displayLabel: `${rosterName} - first encounter still needed`,
       employeeName: rosterName,
-      employeeId: latestCapture?.employeeId ?? null,
+      employeeId: rosterRecord.employeeId ?? latestCapture?.employeeId ?? null,
       stationName: latestCapture?.station ?? null,
       stationId: latestCapture?.station
         ? normalizePrioritizationIdentity(latestCapture.station)
@@ -301,18 +312,16 @@ export const derivePrioritizationItems = ({
       });
   });
 
-  getKnownStationsForPrioritization(captureOptions, captures, settings.stationRiskMap).forEach((stationName) => {
-    const normalizedStationKey = normalizeKey(stationName);
-    const matchingRiskEntry = Object.entries(settings.stationRiskMap).find(
-      ([candidateStation]) => normalizeKey(candidateStation) === normalizedStationKey,
-    );
+  riskRankedStationRecords.forEach((stationRecord) => {
+    const normalizedStationKey = normalizeKey(stationRecord.stationName);
 
-    if (!matchingRiskEntry || seenStationKeys.has(normalizedStationKey)) {
+    if (!stationRecord.riskLevel || seenStationKeys.has(normalizedStationKey)) {
       return;
     }
 
     seenStationKeys.add(normalizedStationKey);
-    const [displayStationName, riskLevel] = matchingRiskEntry;
+    const displayStationName = stationRecord.stationName;
+    const riskLevel = stationRecord.riskLevel;
     const stationBucket = STATION_BUCKET_BY_RISK[riskLevel];
 
     items.push({
@@ -328,7 +337,7 @@ export const derivePrioritizationItems = ({
       employeeName: null,
       employeeId: null,
       stationName: displayStationName,
-      stationId: normalizePrioritizationIdentity(displayStationName),
+      stationId: stationRecord.stationId ?? normalizePrioritizationIdentity(displayStationName),
       sourceReason: `${riskLevel[0].toUpperCase()}${riskLevel.slice(1)}-risk station configured in prioritization settings.`,
       relatedEncounterType: stationBucket.relatedEncounterType,
       relatedAssessmentType: 'Observational Scan',

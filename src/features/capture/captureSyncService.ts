@@ -48,7 +48,7 @@ export const uploadMobileCaptureEntries = async (
   const uploadableCaptures = selectedCaptures.filter(isCaptureUploadEligible);
 
   if (uploadableCaptures.length === 0) {
-    throw new Error('Selected captures are already uploaded or are not ready for sync.');
+    throw new Error('Selected captures are already pending desktop review or are not ready for sync.');
   }
 
   const updatedCaptures = await Promise.all(

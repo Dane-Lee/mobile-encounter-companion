@@ -38,6 +38,17 @@ const buildUrl = (baseUrl: string, path: string, params?: Record<string, string>
   return url.toString();
 };
 
+const buildSyncUrl = (baseUrl: string, path: string, params?: Record<string, string>) => {
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, '');
+  const syncBaseUrl = /\/api\/sync$/i.test(normalizedBaseUrl)
+    ? normalizedBaseUrl
+    : /\/api$/i.test(normalizedBaseUrl)
+      ? `${normalizedBaseUrl}/sync`
+      : `${normalizedBaseUrl}/api/sync`;
+
+  return buildUrl(syncBaseUrl, path, params);
+};
+
 const readErrorBody = async (response: Response) => {
   try {
     const text = await response.text();
@@ -104,6 +115,8 @@ const withCaptureDefaults = (
   value: MobileCaptureEntryRequest,
 ): MobileCaptureEntryRequest => ({
   ...value,
+  source_app: value.source_app ?? 'mobile',
+  sync_record_type: value.sync_record_type ?? 'mobile_capture_entry',
   device_id: value.device_id ?? getDesktopSyncDeviceId(),
   version: value.version ?? getDesktopSyncVersion(),
 });
@@ -127,7 +140,7 @@ export const fetchWeeklySnapshots = async (params?: SyncScopeParams) => {
   const baseUrl = requireConfiguredBaseUrl();
   const { userId, worksiteId } = resolveSyncScope(params);
   const response = await requestJson<MobileWeeklySnapshotResponse[]>(
-    buildUrl(baseUrl, 'sync/weekly_snapshots', {
+    buildSyncUrl(baseUrl, 'weekly_snapshots', {
       user_id: userId,
       worksite_id: worksiteId,
     }),
@@ -143,7 +156,7 @@ export const fetchWeeklySnapshots = async (params?: SyncScopeParams) => {
 export const createMobileCaptureEntry = async (value: MobileCaptureEntryRequest) => {
   const baseUrl = requireConfiguredBaseUrl();
   const response = await requestJson<MobileCaptureEntryResponse>(
-    buildUrl(baseUrl, 'sync/mobile_capture_entries'),
+    buildSyncUrl(baseUrl, 'mobile_capture_entries'),
     {
       method: 'POST',
       headers: buildHeaders(),
@@ -164,7 +177,7 @@ export const getPrioritizationSettings = async (params?: SyncScopeParams) => {
 
   // Server returns { settings: PrioritizationSettingsResponse | null }
   const envelope = await requestJson<{ settings: PrioritizationSettingsResponse | null }>(
-    buildUrl(baseUrl, 'sync/prioritization_settings', {
+    buildSyncUrl(baseUrl, 'prioritization_settings', {
       user_id: userId,
       worksite_id: worksiteId,
     }),
@@ -183,7 +196,7 @@ export const putPrioritizationSettings = async (value: PrioritizationSettingsReq
 
   // Server returns { settings: PrioritizationSettingsResponse }
   const envelope = await requestJson<{ settings: PrioritizationSettingsResponse }>(
-    buildUrl(baseUrl, 'sync/prioritization_settings'),
+    buildSyncUrl(baseUrl, 'prioritization_settings'),
     {
       method: 'PUT',
       headers: buildHeaders(),
@@ -208,7 +221,7 @@ export const getDailyPrioritizationState = async (params: {
 
   // Server returns { state: DailyPrioritizationStateResponse | null }
   const envelope = await requestJson<{ state: DailyPrioritizationStateResponse | null }>(
-    buildUrl(baseUrl, 'sync/daily_prioritization_state', {
+    buildSyncUrl(baseUrl, 'daily_prioritization_state', {
       user_id: userId,
       worksite_id: worksiteId,
       prioritization_date: params.prioritizationDate,
@@ -230,7 +243,7 @@ export const putDailyPrioritizationState = async (
 
   // Server returns { state: DailyPrioritizationStateResponse }
   const envelope = await requestJson<{ state: DailyPrioritizationStateResponse }>(
-    buildUrl(baseUrl, 'sync/daily_prioritization_state'),
+    buildSyncUrl(baseUrl, 'daily_prioritization_state'),
     {
       method: 'PUT',
       headers: buildHeaders(),

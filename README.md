@@ -116,23 +116,23 @@ The sync model is backend-mediated only. Mobile and desktop do not communicate d
 Configure the hosted mobile app with these environment variables when you want sync enabled:
 
 ```bash
-VITE_SYNC_API_BASE_URL=https://your-sync-api.example.com/api/sync
+VITE_SYNC_API_BASE_URL=https://your-sync-api.example.com
 VITE_SYNC_USER_ID=your-user-id
 VITE_SYNC_WORKSITE_ID=your-worksite-id
 VITE_SYNC_DEVICE_ID=optional-device-id
 VITE_SYNC_CONTRACT_VERSION=1.0.0
 ```
 
-The mobile app appends relative sync paths to `VITE_SYNC_API_BASE_URL`, so this value should point at the sync root.
+The mobile app posts to the desktop sync routes under `/api/sync`. `VITE_SYNC_API_BASE_URL` may be the desktop server origin, `/api`, or `/api/sync`; the app normalizes all three to the same sync root.
 
-Expected mobile-side endpoints beneath that base URL:
+Expected mobile-side endpoints:
 
-- `POST /mobile_capture_entries`
-- `GET /weekly_snapshots?user_id=...&worksite_id=...`
-- `GET /prioritization_settings?user_id=...&worksite_id=...`
-- `PUT /prioritization_settings`
-- `GET /daily_prioritization_state?user_id=...&worksite_id=...&date=YYYY-MM-DD`
-- `PUT /daily_prioritization_state`
+- `POST /api/sync/mobile_capture_entries`
+- `GET /api/sync/weekly_snapshots?user_id=...&worksite_id=...`
+- `GET /api/sync/prioritization_settings?user_id=...&worksite_id=...`
+- `PUT /api/sync/prioritization_settings`
+- `GET /api/sync/daily_prioritization_state?user_id=...&worksite_id=...&date=YYYY-MM-DD`
+- `PUT /api/sync/daily_prioritization_state`
 
 The mobile app validates both shared sync payload types before it writes them into local storage.
 

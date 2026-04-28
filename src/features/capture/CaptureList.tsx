@@ -56,7 +56,7 @@ const syncToneByStatus: Record<
 
 const syncLabelByStatus: Record<MobileEncounterCapture['syncStatus'], string> = {
   local_only: 'Local Only',
-  uploaded: 'Uploaded',
+  uploaded: 'Pending Desktop Review',
   imported_to_desktop: 'Desktop Accepted',
   resolved: 'Resolved',
   sync_error: 'Sync Error',
@@ -160,13 +160,13 @@ const CaptureList = ({
 
       <div className="sync-summary-row">
         <span className="sync-summary-pill">{syncSummary.localOnlyCount} local only</span>
-        <span className="sync-summary-pill">{syncSummary.uploadedCount} uploaded</span>
+        <span className="sync-summary-pill">{syncSummary.uploadedCount} pending review</span>
         <span className="sync-summary-pill">{syncSummary.errorCount} sync errors</span>
       </div>
 
       <p className="helper-copy">
         Select ready items below, then download one local export package. If backend sync is set up,
-        you can also upload ready records for later desktop review.
+        you can also send ready records to the desktop review queue.
       </p>
 
       {captures.length === 0 ? (
