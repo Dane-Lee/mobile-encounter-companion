@@ -1,5 +1,5 @@
 import type { PrioritizationSettings } from '../contracts/prioritizationContracts';
-import { STORE_NAMES, getAllRecords, putRecord } from './indexedDb';
+import { STORE_NAMES, clearStore, getAllRecords, putRecord } from './indexedDb';
 
 export const listPrioritizationSettingsRecords = () =>
   getAllRecords<PrioritizationSettings>(STORE_NAMES.prioritizationSettings);
@@ -12,3 +12,5 @@ export const getPrioritizationSettingsRecord = async () => {
 export const savePrioritizationSettingsRecord = (record: PrioritizationSettings) =>
   putRecord(STORE_NAMES.prioritizationSettings, record);
 
+export const clearPrioritizationSettingsRecords = () =>
+  clearStore(STORE_NAMES.prioritizationSettings);

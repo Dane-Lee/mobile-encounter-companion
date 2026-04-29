@@ -1,18 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ModeSwitcher, { type AppMode } from './components/ModeSwitcher';
 import { PACKAGE_VERSION_INFO } from './contracts/mobileContracts';
 import type { CaptureFormValues } from './contracts/mobileContracts';
 import CaptureMode from './features/capture/CaptureMode';
 import GuideModal from './features/guide/GuideModal';
 import PrioritizationMode from './features/prioritization/PrioritizationMode';
+import ResponsibleUseDialog from './features/responsible-use/ResponsibleUseDialog';
 import UtilitiesPanel from './features/utilities/UtilitiesPanel';
 import WeekViewMode from './features/week-view/WeekViewMode';
 import { useCompanionData } from './app/useCompanionData';
 import type { CapturePrefillRequest } from './features/prioritization/types';
+import {
+  RESPONSIBLE_USE_NOTICE_ACCEPTANCE_CHANGED_EVENT,
+  hasAcceptedResponsibleUseNotice,
+  markResponsibleUseNoticeAccepted,
+} from './privacy/responsibleUseNoticeStore';
 
 const App = () => {
   const [mode, setMode] = useState<AppMode>('capture');
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [isResponsibleUseOpen, setIsResponsibleUseOpen] = useState(false);
+  const [responsibleUseRequired, setResponsibleUseRequired] = useState(false);
   const [capturePrefill, setCapturePrefill] = useState<
     (Partial<CaptureFormValues> & { requestId: number }) | null
   >(null);
@@ -22,6 +30,7 @@ const App = () => {
     activeSnapshot,
     captureOptions,
     hasCaptureOptionOverrides,
+    retentionEligibleCaptureCount,
     notice,
     isBusy,
     syncStatus,
@@ -34,6 +43,11 @@ const App = () => {
     handleRefreshWeeklySnapshots,
     handleSeedSampleData,
     handleClearSampleData,
+    handleDownloadDataInventory,
+    handleClearCaptures,
+    handleClearWeekSnapshots,
+    handleClearRetentionEligibleCaptures,
+    handleClearAllLocalData,
     handleAddDepartmentOption,
     handleRemoveDepartmentOption,
     handleAddLocationOption,
@@ -44,6 +58,33 @@ const App = () => {
     handleRemoveStationOption,
     handleResetCaptureOptions,
   } = useCompanionData();
+
+  useEffect(() => {
+    const syncNoticeState = () => {
+      const accepted = hasAcceptedResponsibleUseNotice();
+      setResponsibleUseRequired(!accepted);
+      setIsResponsibleUseOpen(!accepted);
+    };
+
+    syncNoticeState();
+    window.addEventListener(
+      RESPONSIBLE_USE_NOTICE_ACCEPTANCE_CHANGED_EVENT,
+      syncNoticeState,
+    );
+
+    return () => {
+      window.removeEventListener(
+        RESPONSIBLE_USE_NOTICE_ACCEPTANCE_CHANGED_EVENT,
+        syncNoticeState,
+      );
+    };
+  }, []);
+
+  const handleAcceptResponsibleUseNotice = () => {
+    markResponsibleUseNoticeAccepted();
+    setResponsibleUseRequired(false);
+    setIsResponsibleUseOpen(false);
+  };
 
   return (
     <div className="app-shell">
@@ -69,6 +110,16 @@ const App = () => {
             onClick={() => setIsGuideOpen(true)}
           >
             How This Works
+          </button>
+          <button
+            type="button"
+            className="button button--ghost button--guide"
+            onClick={() => {
+              setResponsibleUseRequired(false);
+              setIsResponsibleUseOpen(true);
+            }}
+          >
+            Responsible Use
           </button>
         </div>
       </header>
@@ -132,8 +183,14 @@ const App = () => {
         snapshotCount={snapshots.length}
         captureOptions={captureOptions}
         hasCaptureOptionOverrides={hasCaptureOptionOverrides}
+        retentionEligibleCaptureCount={retentionEligibleCaptureCount}
         onSeedSampleData={handleSeedSampleData}
         onClearSampleData={handleClearSampleData}
+        onDownloadDataInventory={handleDownloadDataInventory}
+        onClearCaptures={handleClearCaptures}
+        onClearWeekSnapshots={handleClearWeekSnapshots}
+        onClearRetentionEligibleCaptures={handleClearRetentionEligibleCaptures}
+        onClearAllLocalData={handleClearAllLocalData}
         onAddDepartmentOption={handleAddDepartmentOption}
         onRemoveDepartmentOption={handleRemoveDepartmentOption}
         onAddLocationOption={handleAddLocationOption}
@@ -149,7 +206,15 @@ const App = () => {
       <GuideModal
         open={isGuideOpen}
         syncConfigured={syncStatus.isConfigured}
+        onOpenResponsibleUse={() => setIsResponsibleUseOpen(true)}
         onClose={() => setIsGuideOpen(false)}
+      />
+
+      <ResponsibleUseDialog
+        open={isResponsibleUseOpen}
+        required={responsibleUseRequired}
+        onAccept={handleAcceptResponsibleUseNotice}
+        onClose={() => setIsResponsibleUseOpen(false)}
       />
     </div>
   );

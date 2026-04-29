@@ -18,6 +18,12 @@ import {
 } from '../../config/siteCaptureOptions';
 import { toLocalDateTimeLabel } from '../../lib/dateTime';
 import { hasTagValue, parseTagsText, toggleTagInText } from '../../lib/tags';
+import {
+  assessCaptureContent,
+  formatGuardrailMatchLabels,
+  type CaptureContentAssessment,
+} from '../../privacy/contentGuardrails';
+import { captureGuardrailCopy } from '../../privacy/responsibleUseConfig';
 
 interface CaptureFormProps {
   captureOptions: CaptureOptionLists;
@@ -120,6 +126,11 @@ const synchronizeHierarchySelections = (
 const CaptureForm = ({ captureOptions, prefill, onSave, disabled = false }: CaptureFormProps) => {
   const [values, setValues] = useState<CaptureFormValues>(initialValues);
   const [isFollowUpInfoOpen, setIsFollowUpInfoOpen] = useState(false);
+  const [guardrailError, setGuardrailError] = useState<string | null>(null);
+  const [sensitiveWarning, setSensitiveWarning] = useState<CaptureContentAssessment | null>(
+    null,
+  );
+  const [pendingSaveMode, setPendingSaveMode] = useState<'draft' | 'ready' | null>(null);
   const [timestampLabel, setTimestampLabel] = useState(
     toLocalDateTimeLabel(new Date().toISOString()),
   );
@@ -151,12 +162,52 @@ const CaptureForm = ({ captureOptions, prefill, onSave, disabled = false }: Capt
   }, [captureOptions, values.department, values.location]);
 
   const updateValue = <K extends keyof CaptureFormValues>(field: K, value: CaptureFormValues[K]) => {
+    setGuardrailError(null);
+    setSensitiveWarning(null);
+    setPendingSaveMode(null);
     setValues((current) => ({ ...current, [field]: value }));
   };
 
-  const handleSave = async (saveMode: 'draft' | 'ready') => {
+  const handleSave = async (
+    saveMode: 'draft' | 'ready',
+    options: { acknowledgedSensitiveContent?: boolean } = {},
+  ) => {
+    const assessment = assessCaptureContent({
+      summaryShort: values.summaryShort,
+      tagsText: values.tagsText,
+    });
+
+    if (assessment.hasBlockedContent) {
+      setSensitiveWarning(null);
+      setPendingSaveMode(null);
+      setGuardrailError(
+        `Matched: ${formatGuardrailMatchLabels(
+          assessment.blockedMatches,
+        )}. Remove those details before saving.`,
+      );
+      return;
+    }
+
+    if (assessment.hasSensitiveContent && !options.acknowledgedSensitiveContent) {
+      setGuardrailError(null);
+      setSensitiveWarning(assessment);
+      setPendingSaveMode(saveMode);
+      return;
+    }
+
     await onSave(values, saveMode);
+    setGuardrailError(null);
+    setSensitiveWarning(null);
+    setPendingSaveMode(null);
     setValues(initialValues);
+  };
+
+  const handleContinueAfterSensitiveWarning = async () => {
+    if (!pendingSaveMode) {
+      return;
+    }
+
+    await handleSave(pendingSaveMode, { acknowledgedSensitiveContent: true });
   };
 
   const canSave = Boolean(
@@ -281,6 +332,7 @@ const CaptureForm = ({ captureOptions, prefill, onSave, disabled = false }: Capt
             maxLength={280}
             disabled={disabled}
           />
+          <small className="helper-copy">{captureGuardrailCopy.summaryHelper}</small>
         </label>
 
         <label className="field">
@@ -312,6 +364,8 @@ const CaptureForm = ({ captureOptions, prefill, onSave, disabled = false }: Capt
           <small className="helper-copy">
             Use the exact structured tags <code>uncertain-pain</code> and{' '}
             <code>uncertain-mobility</code> when those temporary prioritization markers apply.
+            {' '}
+            {captureGuardrailCopy.tagsHelper}
           </small>
         </label>
 
@@ -349,6 +403,44 @@ const CaptureForm = ({ captureOptions, prefill, onSave, disabled = false }: Capt
           </label>
         ) : null}
       </div>
+
+      {guardrailError ? (
+        <div className="guardrail-panel guardrail-panel--error" role="alert">
+          <strong>{captureGuardrailCopy.blockedTitle}</strong>
+          <span>{guardrailError}</span>
+        </div>
+      ) : null}
+
+      {sensitiveWarning ? (
+        <div className="guardrail-panel guardrail-panel--warning" role="status">
+          <strong>{captureGuardrailCopy.sensitiveTitle}</strong>
+          <span>
+            {captureGuardrailCopy.sensitiveBody} Matched:{' '}
+            {formatGuardrailMatchLabels(sensitiveWarning.sensitiveMatches)}.
+          </span>
+          <div className="guardrail-panel__actions">
+            <button
+              type="button"
+              className="button button--secondary"
+              onClick={() => void handleContinueAfterSensitiveWarning()}
+              disabled={disabled}
+            >
+              Save Anyway
+            </button>
+            <button
+              type="button"
+              className="button button--ghost"
+              onClick={() => {
+                setSensitiveWarning(null);
+                setPendingSaveMode(null);
+              }}
+              disabled={disabled}
+            >
+              Revise Note
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="capture-form__footer">
         <p>Auto timestamp: {timestampLabel}</p>

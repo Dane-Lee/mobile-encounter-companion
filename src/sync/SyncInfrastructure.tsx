@@ -173,6 +173,15 @@ export const SyncInfrastructure = ({ children }: PropsWithChildren) => {
             {!syncConfigured ? (
               <>
                 <div className="sync-settings-modal__body">
+                  <div className="sync-status-note">
+                    <strong>Configuration only</strong>
+                    <span>
+                      QR and manual pairing only store a sync destination on this browser. Production
+                      use still needs server-side authentication, device registration, authorization,
+                      audit logging, and HTTPS.
+                    </span>
+                  </div>
+
                   <button
                     type="button"
                     className="sync-primary-action"
@@ -273,6 +282,14 @@ export const SyncInfrastructure = ({ children }: PropsWithChildren) => {
                         <span>{settings.worksiteId}</span>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="sync-status-note">
+                    <strong>Production safeguard required</strong>
+                    <span>
+                      This configured scope is not a substitute for authenticated backend access,
+                      device revocation, worksite authorization, or audit logs.
+                    </span>
                   </div>
 
                   <div className="sync-settings-status">

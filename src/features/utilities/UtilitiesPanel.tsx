@@ -9,8 +9,14 @@ interface UtilitiesPanelProps {
   snapshotCount: number;
   captureOptions: CaptureOptionLists;
   hasCaptureOptionOverrides: boolean;
+  retentionEligibleCaptureCount: number;
   onSeedSampleData: () => Promise<void>;
   onClearSampleData: () => Promise<void>;
+  onDownloadDataInventory: () => Promise<void>;
+  onClearCaptures: () => Promise<void>;
+  onClearWeekSnapshots: () => Promise<void>;
+  onClearRetentionEligibleCaptures: () => Promise<void>;
+  onClearAllLocalData: () => Promise<void>;
   onAddDepartmentOption: (value: string) => Promise<void>;
   onRemoveDepartmentOption: (value: string) => Promise<void>;
   onAddLocationOption: (name: string, department: string | null) => Promise<void>;
@@ -29,8 +35,14 @@ const UtilitiesPanel = ({
   snapshotCount,
   captureOptions,
   hasCaptureOptionOverrides,
+  retentionEligibleCaptureCount,
   onSeedSampleData,
   onClearSampleData,
+  onDownloadDataInventory,
+  onClearCaptures,
+  onClearWeekSnapshots,
+  onClearRetentionEligibleCaptures,
+  onClearAllLocalData,
   onAddDepartmentOption,
   onRemoveDepartmentOption,
   onAddLocationOption,
@@ -41,7 +53,16 @@ const UtilitiesPanel = ({
   onRemoveStationOption,
   onResetCaptureOptions,
   disabled = false,
-}: UtilitiesPanelProps) => (
+}: UtilitiesPanelProps) => {
+  const confirmLocalClear = (message: string, action: () => Promise<void>) => {
+    if (!window.confirm(message)) {
+      return;
+    }
+
+    void action();
+  };
+
+  return (
   <details className="utilities-panel">
     <summary>Utilities</summary>
     <SectionCard
@@ -84,6 +105,87 @@ const UtilitiesPanel = ({
           <strong>Week snapshot schema</strong>
           <span>{versionInfo.mobileWeekSnapshotSchemaVersion}</span>
         </div>
+      </div>
+
+      <div className="local-data-controls">
+        <div className="section-card__body-header">
+          <div>
+            <p className="section-card__body-title">Local Data Controls</p>
+            <p className="section-card__body-copy">
+              These actions affect data stored in this browser on this device. They do not delete
+              records already exported, downloaded, or accepted by a backend/desktop system.
+            </p>
+          </div>
+        </div>
+
+        <div className="local-data-control-grid">
+          <button
+            type="button"
+            className="button button--secondary"
+            onClick={() => void onDownloadDataInventory()}
+            disabled={disabled}
+          >
+            Download Data Inventory
+          </button>
+          <button
+            type="button"
+            className="button button--secondary"
+            onClick={() =>
+              confirmLocalClear(
+                'Clear capture records stored in this browser? Exported/downloaded files and backend records will not be changed.',
+                onClearCaptures,
+              )
+            }
+            disabled={disabled || captureCount === 0}
+          >
+            Clear Captures
+          </button>
+          <button
+            type="button"
+            className="button button--secondary"
+            onClick={() =>
+              confirmLocalClear(
+                'Clear cached week snapshots stored in this browser? Backend and desktop records will not be changed.',
+                onClearWeekSnapshots,
+              )
+            }
+            disabled={disabled || snapshotCount === 0}
+          >
+            Clear Week Snapshots
+          </button>
+          <button
+            type="button"
+            className="button button--secondary"
+            onClick={() =>
+              confirmLocalClear(
+                'Clear retention-eligible captures from this browser? Draft, local-only, and sync-error records will be kept.',
+                onClearRetentionEligibleCaptures,
+              )
+            }
+            disabled={disabled || retentionEligibleCaptureCount === 0}
+          >
+            Clear Retention-Eligible Captures
+          </button>
+          <button
+            type="button"
+            className="button button--ghost"
+            onClick={() =>
+              confirmLocalClear(
+                'Clear all local app data from this browser, including captures, snapshots, prioritization state, local options, sync settings, and notice acceptance?',
+                onClearAllLocalData,
+              )
+            }
+            disabled={disabled}
+          >
+            Clear All Local Data
+          </button>
+        </div>
+
+        <p className="helper-copy">
+          {retentionEligibleCaptureCount} capture
+          {retentionEligibleCaptureCount === 1 ? '' : 's'} currently meet the local retention
+          review window.
+        </p>
       </div>
 
       <div className="sample-links">
@@ -170,6 +272,7 @@ const UtilitiesPanel = ({
       </div>
     </SectionCard>
   </details>
-);
+  );
+};
 
 export default UtilitiesPanel;

@@ -91,3 +91,8 @@ export const deleteRecord = (storeName: StoreName, key: IDBValidKey) =>
   withStore(storeName, 'readwrite', (store) =>
     requestToPromise(store.delete(key)).then(() => undefined),
   );
+
+export const clearStore = (storeName: StoreName) =>
+  withStore(storeName, 'readwrite', (store) =>
+    requestToPromise(store.clear()).then(() => undefined),
+  );

@@ -1,5 +1,5 @@
 import type { DailyPrioritizationState } from '../contracts/prioritizationContracts';
-import { STORE_NAMES, getAllRecords, putRecord } from './indexedDb';
+import { STORE_NAMES, clearStore, getAllRecords, putRecord } from './indexedDb';
 
 export const listDailyPrioritizationStateRecords = () =>
   getAllRecords<DailyPrioritizationState>(STORE_NAMES.dailyPrioritizationState);
@@ -12,3 +12,5 @@ export const getDailyPrioritizationStateRecord = async (prioritizationDate: stri
 export const saveDailyPrioritizationStateRecord = (record: DailyPrioritizationState) =>
   putRecord(STORE_NAMES.dailyPrioritizationState, record);
 
+export const clearDailyPrioritizationStateRecords = () =>
+  clearStore(STORE_NAMES.dailyPrioritizationState);

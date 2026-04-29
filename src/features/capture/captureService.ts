@@ -12,10 +12,12 @@ import {
 } from './captureRecordFactory';
 import { withCaptureSyncDefaults } from '../../sync/syncMappers';
 import {
+  deleteMobileEncounterCaptures,
   listMobileEncounterCaptures,
   saveMobileEncounterCapture,
   saveMobileEncounterCaptures,
 } from '../../storage/captureStore';
+import { getRetentionEligibleCaptures } from '../../privacy/dataGovernance';
 
 export interface PreparedCaptureExport {
   exportPackage: MobileCaptureExportPackage;
@@ -141,4 +143,15 @@ export const commitCaptureExport = async (
 
   await saveMobileEncounterCaptures(updatedCaptures);
   return updatedCaptures;
+};
+
+export const clearRetentionEligibleCaptureRecords = async () => {
+  const captures = await normalizeStoredCaptureRecords(await listMobileEncounterCaptures());
+  const retentionEligibleCaptures = getRetentionEligibleCaptures(captures);
+
+  await deleteMobileEncounterCaptures(
+    retentionEligibleCaptures.map((capture) => capture.captureId),
+  );
+
+  return retentionEligibleCaptures.length;
 };

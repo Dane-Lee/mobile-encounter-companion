@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 interface GuideModalProps {
   open: boolean;
   syncConfigured: boolean;
+  onOpenResponsibleUse: () => void;
   onClose: () => void;
 }
 
@@ -91,7 +92,12 @@ const guideSections = [
   },
 ] as const;
 
-const GuideModal = ({ open, syncConfigured, onClose }: GuideModalProps) => {
+const GuideModal = ({
+  open,
+  syncConfigured,
+  onOpenResponsibleUse,
+  onClose,
+}: GuideModalProps) => {
   useEffect(() => {
     if (!open) {
       return undefined;
@@ -153,6 +159,23 @@ const GuideModal = ({ open, syncConfigured, onClose }: GuideModalProps) => {
               </div>
             </section>
           ) : null}
+
+          <section className="guide-status-panel">
+            <div className="sync-status-note sync-status-note--guide">
+              <strong>Responsible use notice</strong>
+              <span>Review the local storage, sync, retention, and prohibited-content guardrails for this device.</span>
+              <button
+                type="button"
+                className="button button--secondary"
+                onClick={() => {
+                  onClose();
+                  onOpenResponsibleUse();
+                }}
+              >
+                Open Notice
+              </button>
+            </div>
+          </section>
 
           {guideSections.map((section) => (
             <details key={section.title} className="guide-section">

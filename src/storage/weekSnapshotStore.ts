@@ -2,7 +2,7 @@ import type {
   StoredMobileWeekSnapshot,
 } from '../contracts/mobileContracts';
 import { isSampleId } from '../lib/id';
-import { STORE_NAMES, deleteRecord, getAllRecords, putRecord, putRecords } from './indexedDb';
+import { STORE_NAMES, clearStore, deleteRecord, getAllRecords, putRecord, putRecords } from './indexedDb';
 
 export const listStoredWeekSnapshots = () =>
   getAllRecords<StoredMobileWeekSnapshot>(STORE_NAMES.weekSnapshots);
@@ -12,6 +12,8 @@ export const saveStoredWeekSnapshot = (snapshot: StoredMobileWeekSnapshot) =>
 
 export const saveStoredWeekSnapshots = (snapshots: StoredMobileWeekSnapshot[]) =>
   putRecords(STORE_NAMES.weekSnapshots, snapshots);
+
+export const clearStoredWeekSnapshots = () => clearStore(STORE_NAMES.weekSnapshots);
 
 export const clearSampleWeekSnapshots = async () => {
   const snapshots = await listStoredWeekSnapshots();

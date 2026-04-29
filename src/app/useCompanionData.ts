@@ -6,7 +6,11 @@ import type {
 } from '../contracts/mobileContracts';
 import { downloadJsonFile } from '../lib/download';
 import { seedSampleData } from '../mocks/sampleSeed';
-import { clearSampleCaptures } from '../storage/captureStore';
+import {
+  clearMobileEncounterCaptures,
+  clearSampleCaptures,
+  listMobileEncounterCaptures,
+} from '../storage/captureStore';
 import {
   addDepartmentOptionOverride,
   addLocationOptionOverride,
@@ -20,8 +24,21 @@ import {
   updateLocationOptionDepartment,
   updateStationOptionLocation,
 } from '../storage/captureOptionStore';
-import { clearSampleWeekSnapshots } from '../storage/weekSnapshotStore';
 import {
+  clearSampleWeekSnapshots,
+  clearStoredWeekSnapshots,
+  listStoredWeekSnapshots,
+} from '../storage/weekSnapshotStore';
+import {
+  clearPrioritizationSettingsRecords,
+  listPrioritizationSettingsRecords,
+} from '../storage/prioritizationSettingsStore';
+import {
+  clearDailyPrioritizationStateRecords,
+  listDailyPrioritizationStateRecords,
+} from '../storage/dailyPrioritizationStateStore';
+import {
+  clearRetentionEligibleCaptureRecords,
   commitCaptureExport,
   createAndSaveCaptureRecord,
   listCaptureRecordsForDisplay,
@@ -39,6 +56,12 @@ import { refreshWeeklySnapshotsFromSync } from '../features/week-view/weeklySnap
 import { useMobileSyncStatus } from '../sync/useMobileSyncStatus';
 import { FULL_SYNC_COMPLETED_EVENT } from '../sync/sync';
 import type { CaptureOptionLists } from '../config/siteCaptureOptions';
+import {
+  buildLocalDataInventory,
+  getRetentionEligibleCaptures,
+} from '../privacy/dataGovernance';
+import { clearResponsibleUseNoticeAcceptance } from '../privacy/responsibleUseNoticeStore';
+import { clearDesktopSyncSettings } from '../sync/config';
 
 type Notice = { tone: 'success' | 'error' | 'info'; message: string } | null;
 
@@ -238,6 +261,79 @@ export const useCompanionData = () => {
     }, 'Sample data removed from local storage.');
   };
 
+  const handleDownloadDataInventory = async () => {
+    await runCustomAction(async () => {
+      const [
+        captureRecords,
+        weekSnapshots,
+        prioritizationSettingsRecords,
+        dailyPrioritizationStateRecords,
+      ] = await Promise.all([
+        listMobileEncounterCaptures(),
+        listStoredWeekSnapshots(),
+        listPrioritizationSettingsRecords(),
+        listDailyPrioritizationStateRecords(),
+      ]);
+      const inventory = buildLocalDataInventory({
+        captures: captureRecords,
+        snapshots: weekSnapshots,
+        prioritizationSettingsCount: prioritizationSettingsRecords.length,
+        dailyPrioritizationStateCount: dailyPrioritizationStateRecords.length,
+        captureOptionsCustomized: hasStoredCaptureOptionOverrides(),
+        syncConfigured: syncStatus.isConfigured,
+      });
+      const timestamp = inventory.generatedAt.replaceAll(':', '-').replaceAll('.', '-');
+
+      downloadJsonFile(`mobile-companion-data-inventory-${timestamp}.json`, inventory);
+
+      return {
+        tone: 'success',
+        message: 'Local data inventory downloaded.',
+      };
+    });
+  };
+
+  const handleClearCaptures = async () => {
+    await runAction(async () => {
+      await clearMobileEncounterCaptures();
+    }, 'All local capture records removed from this browser.');
+  };
+
+  const handleClearWeekSnapshots = async () => {
+    await runAction(async () => {
+      await clearStoredWeekSnapshots();
+    }, 'All cached week snapshots removed from this browser.');
+  };
+
+  const handleClearRetentionEligibleCaptures = async () => {
+    await runCustomAction(async () => {
+      const removedCount = await clearRetentionEligibleCaptureRecords();
+
+      return {
+        tone: 'success',
+        message:
+          removedCount === 0
+            ? 'No retention-eligible capture records were found.'
+            : `Removed ${removedCount} retention-eligible capture${removedCount === 1 ? '' : 's'} from this browser.`,
+      };
+    });
+  };
+
+  const handleClearAllLocalData = async () => {
+    await runAction(async () => {
+      await Promise.all([
+        clearMobileEncounterCaptures(),
+        clearStoredWeekSnapshots(),
+        clearPrioritizationSettingsRecords(),
+        clearDailyPrioritizationStateRecords(),
+      ]);
+      clearCaptureOptionOverrides();
+      clearResponsibleUseNoticeAcceptance();
+      clearDesktopSyncSettings();
+      refreshCaptureOptions();
+    }, 'All local app data cleared from this browser.');
+  };
+
   const handleAddDepartmentOption = async (value: string) => {
     await runAction(async () => {
       addDepartmentOptionOverride(value);
@@ -325,6 +421,11 @@ export const useCompanionData = () => {
     handleRefreshWeeklySnapshots,
     handleSeedSampleData,
     handleClearSampleData,
+    handleDownloadDataInventory,
+    handleClearCaptures,
+    handleClearWeekSnapshots,
+    handleClearRetentionEligibleCaptures,
+    handleClearAllLocalData,
     handleAddDepartmentOption,
     handleRemoveDepartmentOption,
     handleAddLocationOption,
@@ -334,5 +435,6 @@ export const useCompanionData = () => {
     handleUpdateStationOptionLocation,
     handleRemoveStationOption,
     handleResetCaptureOptions,
+    retentionEligibleCaptureCount: getRetentionEligibleCaptures(captures).length,
   };
 };
